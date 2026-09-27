@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Media Viewer</title>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Universal Media & File Player</title>
     
     <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -25,21 +31,30 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"></path>
             </svg>
         </div>
-        <h1 class="text-xl font-bold">Pro Media Viewer</h1>
-        <p id="media-type-label" class="text-gray-400 text-xs mt-1">Tap below to view content</p>
+        <h1 class="text-xl font-bold">Smart Media Player</h1>
+        <p id="media-type-label" class="text-gray-400 text-xs mt-1">Tap below to access content</p>
     </div>
 
-    <!-- Input Display & Open Button -->
-    <div id="input-container" class="w-full max-w-md glass-panel rounded-2xl p-2 flex items-center mb-6">
+    <!-- Input Box & Main Button -->
+    <div id="input-container" class="w-full max-w-md glass-panel rounded-2xl p-2 flex flex-col gap-2 mb-6">
         <input type="text" id="url-display" readonly value="Loading link..." 
                class="bg-transparent border-none outline-none text-gray-300 text-sm w-full px-3 truncate">
         
-        <button id="open-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-6 rounded-xl transition-all shadow-md">
-            Open
+        <button id="open-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2.5 px-6 rounded-xl transition-all shadow-md w-full">
+            ▶ Open / Stream File
         </button>
     </div>
 
-    <!-- Video Player Container (Hidden initially) -->
+    <!-- Fallback Card for External Webpages / Protected File Links -->
+    <div id="external-card" class="w-full max-w-md glass-panel rounded-2xl p-4 hidden text-center">
+        <p class="text-sm text-yellow-400 font-semibold mb-2">⚠️ Protected / Web Page Link Detected</p>
+        <p class="text-xs text-gray-300 mb-4">Yeh link direct video/PDF file nahi hai, ek webpage hai. Neeche button se ise direct kholo:</p>
+        <button id="external-open-btn" class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold py-2.5 px-4 rounded-xl w-full shadow-lg">
+            🌐 Open Link in Telegram Browser
+        </button>
+    </div>
+
+    <!-- Video Player Container -->
     <div id="video-container" class="w-full max-w-md hidden rounded-xl overflow-hidden shadow-2xl">
         <video id="main-video" controls class="w-full h-auto bg-black">
             <source id="video-source" src="" type="video/mp4">
@@ -47,7 +62,7 @@
         </video>
     </div>
 
-    <!-- PDF Viewer Container (Hidden initially) -->
+    <!-- PDF Viewer Container -->
     <div id="pdf-container" class="w-full max-w-md hidden h-[80vh] rounded-xl overflow-hidden shadow-2xl bg-white">
         <iframe id="pdf-frame" src="" class="w-full h-full border-none"></iframe>
     </div>
@@ -67,11 +82,14 @@
             mediaUrl = decodeURIComponent(mediaUrl);
             urlDisplay.value = mediaUrl;
 
-            // Simple extension check
-            if (mediaUrl.toLowerCase().endsWith('.pdf')) {
+            const cleanUrl = mediaUrl.toLowerCase().split('?')[0];
+
+            if (cleanUrl.endsWith('.pdf')) {
                 mediaLabel.innerText = "📄 PDF Document Detected";
+            } else if (cleanUrl.endsWith('.mp4') || cleanUrl.endsWith('.mkv') || cleanUrl.endsWith('.webm')) {
+                mediaLabel.innerText = "🎬 Direct Video Stream Detected";
             } else {
-                mediaLabel.innerText = "🎬 Video File Detected";
+                mediaLabel.innerText = "🔗 External File Link / Web Page";
             }
         } else {
             urlDisplay.value = "No media link provided!";
@@ -80,17 +98,19 @@
         document.getElementById('open-btn').addEventListener('click', () => {
             if (!mediaUrl) return alert("Link missing!");
 
+            const cleanUrl = mediaUrl.toLowerCase().split('?')[0];
+
             document.getElementById('input-container').classList.add('hidden');
 
-            if (mediaUrl.toLowerCase().endsWith('.pdf')) {
-                // Open PDF via Google Docs Viewer embedded iframe
+            if (cleanUrl.endsWith('.pdf')) {
+                // PDF Handler
                 const pdfContainer = document.getElementById('pdf-container');
                 const pdfFrame = document.getElementById('pdf-frame');
-                
                 pdfFrame.src = `https://docs.google.com/viewer?url=${encodeURIComponent(mediaUrl)}&embedded=true`;
                 pdfContainer.classList.remove('hidden');
-            } else {
-                // Open Video
+
+            } else if (cleanUrl.endsWith('.mp4') || cleanUrl.endsWith('.mkv') || cleanUrl.endsWith('.webm')) {
+                // Direct Video Handler
                 const videoContainer = document.getElementById('video-container');
                 const video = document.getElementById('main-video');
                 const source = document.getElementById('video-source');
@@ -99,6 +119,19 @@
                 source.src = mediaUrl;
                 video.load();
                 video.play();
+
+            } else {
+                // Webpage / FileHost Link Fallback
+                document.getElementById('external-card').classList.remove('hidden');
+            }
+        });
+
+        // Open External Link inside Telegram Browser
+        document.getElementById('external-open-btn').addEventListener('click', () => {
+            if (tg.openLink) {
+                tg.openLink(mediaUrl);
+            } else {
+                window.open(mediaUrl, '_blank');
             }
         });
     </script>
