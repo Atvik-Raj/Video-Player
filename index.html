@@ -3,68 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Media Viewer</title>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Universal Media & File Player</title>
+    <title>Fast Media & PDF Player</title>
     
     <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- PDF.js CDN for Super Fast In-Browser Rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
     <style>
         body { background-color: #0f111a; color: white; }
         .glass-panel { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); }
+        #pdf-render-canvas { width: 100% !important; height: auto !important; }
     </style>
 </head>
 <body class="flex flex-col items-center p-4 min-h-screen">
 
-    <!-- Header -->
+    <!-- Header Section -->
     <div class="flex flex-col items-center mb-6">
         <div class="w-16 h-16 bg-gradient-to-tr from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center shadow-lg mb-3">
             <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"></path>
             </svg>
         </div>
-        <h1 class="text-xl font-bold">Smart Media Player</h1>
-        <p id="media-type-label" class="text-gray-400 text-xs mt-1">Tap below to access content</p>
+        <h1 class="text-xl font-bold">Fast Stream & Viewer</h1>
+        <p id="media-type-label" class="text-gray-400 text-xs mt-1">Tap below to open file</p>
     </div>
 
-    <!-- Input Box & Main Button -->
-    <div id="input-container" class="w-full max-w-md glass-panel rounded-2xl p-2 flex flex-col gap-2 mb-6">
-        <input type="text" id="url-display" readonly value="Loading link..." 
-               class="bg-transparent border-none outline-none text-gray-300 text-sm w-full px-3 truncate">
+    <!-- URL Display & Action Button -->
+    <div id="input-container" class="w-full max-w-md glass-panel rounded-2xl p-3 flex flex-col gap-3 mb-6">
+        <input type="text" id="url-display" readonly value="Detecting file link..." 
+               class="bg-transparent border-none outline-none text-gray-300 text-xs w-full px-2 truncate">
         
-        <button id="open-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2.5 px-6 rounded-xl transition-all shadow-md w-full">
-            ▶ Open / Stream File
+        <button id="open-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-6 rounded-xl transition-all shadow-md w-full">
+            ⚡ Open Instantly
         </button>
     </div>
 
-    <!-- Fallback Card for External Webpages / Protected File Links -->
+    <!-- External Webpage Fallback -->
     <div id="external-card" class="w-full max-w-md glass-panel rounded-2xl p-4 hidden text-center">
-        <p class="text-sm text-yellow-400 font-semibold mb-2">⚠️ Protected / Web Page Link Detected</p>
-        <p class="text-xs text-gray-300 mb-4">Yeh link direct video/PDF file nahi hai, ek webpage hai. Neeche button se ise direct kholo:</p>
-        <button id="external-open-btn" class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold py-2.5 px-4 rounded-xl w-full shadow-lg">
-            🌐 Open Link in Telegram Browser
+        <p class="text-sm text-yellow-400 font-semibold mb-2">Webpage Link Detected</p>
+        <p class="text-xs text-gray-300 mb-4">Yeh direct file nahi hai. Ise Telegram browser me open karein:</p>
+        <button id="external-open-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-4 rounded-xl w-full shadow-lg">
+            🌐 Open in Telegram Browser
         </button>
     </div>
 
     <!-- Video Player Container -->
-    <div id="video-container" class="w-full max-w-md hidden rounded-xl overflow-hidden shadow-2xl">
-        <video id="main-video" controls class="w-full h-auto bg-black">
+    <div id="video-container" class="w-full max-w-md hidden rounded-xl overflow-hidden shadow-2xl bg-black">
+        <video id="main-video" controls class="w-full h-auto">
             <source id="video-source" src="" type="video/mp4">
-            Your browser does not support HTML5 video.
+            Video format not supported.
         </video>
     </div>
 
-    <!-- PDF Viewer Container -->
-    <div id="pdf-container" class="w-full max-w-md hidden h-[80vh] rounded-xl overflow-hidden shadow-2xl bg-white">
-        <iframe id="pdf-frame" src="" class="w-full h-full border-none"></iframe>
+    <!-- Ultra Fast PDF Container -->
+    <div id="pdf-container" class="w-full max-w-md hidden flex-col items-center glass-panel rounded-2xl p-3">
+        <div class="flex justify-between items-center w-full mb-3 px-2">
+            <button id="prev-page" class="bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1.5 rounded-lg">◀ Prev</button>
+            <span class="text-xs text-gray-300">Page: <span id="page-num" class="text-blue-400 font-bold">1</span> / <span id="page-count">--</span></span>
+            <button id="next-page" class="bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1.5 rounded-lg">Next ▶</button>
+        </div>
+        
+        <div id="canvas-wrapper" class="w-full rounded-lg overflow-hidden bg-white shadow-inner flex justify-center">
+            <canvas id="pdf-render-canvas"></canvas>
+        </div>
+
+        <a id="direct-pdf-download" href="#" target="_blank" class="text-xs text-blue-400 underline mt-3">
+            Open Native Full PDF View
+        </a>
     </div>
 
     <script>
@@ -72,9 +80,12 @@
         tg.expand();
         tg.ready();
 
+        // Worker config for PDF.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
         const urlParams = new URLSearchParams(window.location.search);
         let mediaUrl = urlParams.get('v') || urlParams.get('file');
-        
+
         const urlDisplay = document.getElementById('url-display');
         const mediaLabel = document.getElementById('media-type-label');
 
@@ -85,32 +96,95 @@
             const cleanUrl = mediaUrl.toLowerCase().split('?')[0];
 
             if (cleanUrl.endsWith('.pdf')) {
-                mediaLabel.innerText = "📄 PDF Document Detected";
+                mediaLabel.innerText = "📄 PDF Document (Fast Engine)";
             } else if (cleanUrl.endsWith('.mp4') || cleanUrl.endsWith('.mkv') || cleanUrl.endsWith('.webm')) {
-                mediaLabel.innerText = "🎬 Direct Video Stream Detected";
+                mediaLabel.innerText = "🎬 Direct Video Stream";
             } else {
-                mediaLabel.innerText = "🔗 External File Link / Web Page";
+                mediaLabel.innerText = "🔗 External Web Link";
             }
         } else {
-            urlDisplay.value = "No media link provided!";
+            urlDisplay.value = "No media link found";
         }
 
+        // PDF.js State Management
+        let pdfDoc = null;
+        let pageNum = 1;
+        let pageRendering = false;
+        let pageNumPending = null;
+        const canvas = document.getElementById('pdf-render-canvas');
+        const ctx = canvas.getContext('2d');
+
+        function renderPage(num) {
+            pageRendering = true;
+            pdfDoc.getPage(num).then((page) => {
+                const viewport = page.getViewport({ scale: 1.5 });
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                const renderContext = {
+                    canvasContext: ctx,
+                    viewport: viewport
+                };
+                const renderTask = page.render(renderContext);
+
+                renderTask.promise.then(() => {
+                    pageRendering = false;
+                    if (pageNumPending !== null) {
+                        renderPage(pageNumPending);
+                        pageNumPending = null;
+                    }
+                });
+            });
+
+            document.getElementById('page-num').textContent = num;
+        }
+
+        function queueRenderPage(num) {
+            if (pageRendering) {
+                pageNumPending = num;
+            } else {
+                renderPage(num);
+            }
+        }
+
+        document.getElementById('prev-page').addEventListener('click', () => {
+            if (pageNum <= 1) return;
+            pageNum--;
+            queueRenderPage(pageNum);
+        });
+
+        document.getElementById('next-page').addEventListener('click', () => {
+            if (pageNum >= pdfDoc.numPages) return;
+            pageNum++;
+            queueRenderPage(pageNum);
+        });
+
+        // Open Trigger
         document.getElementById('open-btn').addEventListener('click', () => {
-            if (!mediaUrl) return alert("Link missing!");
+            if (!mediaUrl) return alert("URL Missing!");
 
             const cleanUrl = mediaUrl.toLowerCase().split('?')[0];
-
             document.getElementById('input-container').classList.add('hidden');
 
             if (cleanUrl.endsWith('.pdf')) {
-                // PDF Handler
                 const pdfContainer = document.getElementById('pdf-container');
-                const pdfFrame = document.getElementById('pdf-frame');
-                pdfFrame.src = `https://docs.google.com/viewer?url=${encodeURIComponent(mediaUrl)}&embedded=true`;
+                document.getElementById('direct-pdf-download').href = mediaUrl;
                 pdfContainer.classList.remove('hidden');
 
+                // Client-side rendering without Google Server delays
+                pdfjsLib.getDocument(mediaUrl).promise.then((pdfDoc_) => {
+                    pdfDoc = pdfDoc_;
+                    document.getElementById('page-count').textContent = pdfDoc.numPages;
+                    renderPage(pageNum);
+                }).catch((err) => {
+                    console.error("PDF.js fallback trigger:", err);
+                    // Fallback to Native Object if CORS occurs
+                    pdfContainer.innerHTML = `<object data="${mediaUrl}" type="application/pdf" class="w-full h-[75vh] rounded-lg">
+                        <iframe src="https://docs.google.com/viewer?url=${encodeURIComponent(mediaUrl)}&embedded=true" class="w-full h-full border-none"></iframe>
+                    </object>`;
+                });
+
             } else if (cleanUrl.endsWith('.mp4') || cleanUrl.endsWith('.mkv') || cleanUrl.endsWith('.webm')) {
-                // Direct Video Handler
                 const videoContainer = document.getElementById('video-container');
                 const video = document.getElementById('main-video');
                 const source = document.getElementById('video-source');
@@ -119,14 +193,11 @@
                 source.src = mediaUrl;
                 video.load();
                 video.play();
-
             } else {
-                // Webpage / FileHost Link Fallback
                 document.getElementById('external-card').classList.remove('hidden');
             }
         });
 
-        // Open External Link inside Telegram Browser
         document.getElementById('external-open-btn').addEventListener('click', () => {
             if (tg.openLink) {
                 tg.openLink(mediaUrl);
