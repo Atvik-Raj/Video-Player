@@ -1,165 +1,205 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nexa Player</title>
+<!-- ============================================================
+     PART 1: HEAD / CONFIG
+     ============================================================ -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Nexa Player</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Telegram WebApp SDK -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<!-- PDF.js (sirf PDF type ke liye use hota hai) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+<!-- ==================== AD SDK (yahan network ka SDK lagao) ====================
+     AdsGram:  <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+     TADS:     TADS dashboard se jo snippet mile, wahi yahan paste karo.
+     Jab tak koi SDK nahi laga, PART 3 me ek simulated timer dikhega (testing ke liye).
+-->
 
-    <!-- ==================== AD SDK (yahan network ka SDK lagao) ====================
-         AdsGram:  <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
-         TADS:     TADS tumhe apna widget/SDK snippet dashboard me dega, wahan se yahan paste karo.
-         Jab tak koi SDK nahi laga, page ek "simulated" ad (timer) dikhayega taaki flow test ho sake.
-    -->
-
-    <style>
-        body { background-color: #120a08; color: white; }
-        .glass-panel { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); }
-    </style>
+<style>
+    html, body { background-color: #120a08; color: #fff; height: 100%; margin: 0; }
+    .glass-panel { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); }
+    #pdf-canvas { max-width: 100%; display: block; margin: 0 auto; }
+    #pdf-viewer { overflow-y: auto; }
+</style>
 </head>
-<body class="flex flex-col items-center p-4 min-h-screen">
+<body class="flex flex-col items-center min-h-screen">
 
-    <div class="flex flex-col items-center mb-8 mt-10">
-        <div class="w-20 h-20 bg-gradient-to-tr from-orange-500 to-red-500 rounded-3xl flex items-center justify-center shadow-[0_0_20px_rgba(249,115,22,0.5)] mb-4">
-            <svg class="w-10 h-10 text-white translate-x-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-        </div>
-        <h1 class="text-2xl font-bold tracking-wide">Nexa Player</h1>
-        <p class="text-gray-400 text-sm mt-1" id="subtitle">Tap below to unlock your file</p>
+<!-- ============================================================
+     PART 2: HEADER
+     ============================================================ -->
+<div class="flex flex-col items-center mt-6 mb-4">
+    <div class="w-16 h-16 bg-gradient-to-tr from-orange-500 to-red-500 rounded-2xl flex items-center justify-center shadow-[0_0_20px_rgba(249,115,22,0.5)] mb-2">
+        <svg class="w-8 h-8 text-white translate-x-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+    </div>
+    <h1 class="text-xl font-bold tracking-wide">Nexa Player</h1>
+    <p id="file-name" class="text-gray-400 text-xs mt-1 truncate max-w-xs"></p>
+</div>
+
+<!-- ============================================================
+     PART 3: AD GATE (player khulne se pehle)
+     ============================================================ -->
+<div id="step-watch" class="w-full max-w-md glass-panel rounded-2xl p-6 flex flex-col items-center gap-4 mx-4">
+    <button id="watch-btn"
+        class="bg-orange-500 hover:bg-red-600 text-white font-semibold py-3 px-8 rounded-xl transition-all shadow-[0_0_15px_rgba(249,115,22,0.6)] w-full">
+        ▶ Watch Ad & Open Player
+    </button>
+    <p class="text-gray-500 text-xs text-center">Short ad dekhne ke baad player khul jaayega.</p>
+</div>
+
+<div id="step-loading" class="hidden w-full max-w-md glass-panel rounded-2xl p-6 flex flex-col items-center gap-3 mx-4">
+    <div class="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+    <p id="loading-text" class="text-gray-300 text-sm">Loading ad...</p>
+</div>
+
+<div id="step-error" class="hidden w-full max-w-md glass-panel rounded-2xl p-6 flex flex-col items-center gap-3 border border-red-500/30 mx-4">
+    <p class="text-red-400 font-semibold text-center" id="error-text">Something went wrong.</p>
+    <button id="retry-btn" class="bg-orange-500 text-white text-sm font-semibold py-2 px-6 rounded-xl">Try Again</button>
+</div>
+
+<!-- ============================================================
+     PART 4: PLAYER (ad ke baad yahi dikhta hai)
+     ============================================================ -->
+<div id="step-player" class="hidden w-full flex-1 flex flex-col items-center px-3 pb-6">
+
+    <!-- 4a: Video player -->
+    <video id="video-player" class="hidden w-full max-w-2xl rounded-xl" controls playsinline></video>
+
+    <!-- 4b: PDF viewer -->
+    <div id="pdf-viewer" class="hidden w-full max-w-2xl glass-panel rounded-xl p-2"></div>
+    <div id="pdf-controls" class="hidden flex items-center gap-4 mt-3">
+        <button id="pdf-prev" class="bg-orange-500 text-white px-4 py-1 rounded-lg">‹ Prev</button>
+        <span id="pdf-page-info" class="text-sm text-gray-300"></span>
+        <button id="pdf-next" class="bg-orange-500 text-white px-4 py-1 rounded-lg">Next ›</button>
     </div>
 
-    <!-- Step 1: Watch Ad -->
-    <div id="step-watch" class="w-full max-w-md glass-panel rounded-2xl p-6 flex flex-col items-center gap-4">
-        <button id="watch-btn"
-            class="bg-orange-500 hover:bg-red-600 text-white font-semibold py-3 px-8 rounded-xl transition-all shadow-[0_0_15px_rgba(249,115,22,0.6)] w-full">
-            ▶ Watch Ad & Unlock
-        </button>
-        <p class="text-gray-500 text-xs text-center">You'll watch a short ad, then your file will unlock automatically.</p>
+    <!-- 4c: Unsupported type fallback -->
+    <div id="other-viewer" class="hidden w-full max-w-md glass-panel rounded-2xl p-6 flex flex-col items-center gap-4">
+        <p class="text-gray-300 text-sm text-center">Ye file type seedha preview nahi ho sakti.</p>
+        <a id="other-download" href="#" target="_blank"
+           class="bg-orange-500 text-white font-semibold py-2 px-6 rounded-xl">⬇ Download</a>
     </div>
+</div>
 
-    <!-- Step 2: Ad playing / loading -->
-    <div id="step-loading" class="hidden w-full max-w-md glass-panel rounded-2xl p-6 flex flex-col items-center gap-3">
-        <div class="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
-        <p id="loading-text" class="text-gray-300 text-sm">Loading ad...</p>
-    </div>
+<p class="text-gray-600 text-xs mt-auto mb-4">POWERED BY NEXA ENGINE · SECURE</p>
 
-    <!-- Step 3: Unlocked -->
-    <div id="step-done" class="hidden w-full max-w-md glass-panel rounded-2xl p-6 flex flex-col items-center gap-3 border border-green-500/30">
-        <div class="text-3xl">✅</div>
-        <p class="text-green-400 font-semibold">Verified! Opening your file...</p>
-    </div>
+<!-- ============================================================
+     PART 5: LOGIC
+     ============================================================ -->
+<script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+    tg.ready();
 
-    <!-- Step: Error -->
-    <div id="step-error" class="hidden w-full max-w-md glass-panel rounded-2xl p-6 flex flex-col items-center gap-3 border border-red-500/30">
-        <p class="text-red-400 font-semibold text-center" id="error-text">Something went wrong.</p>
-        <button id="retry-btn" class="bg-orange-500 text-white text-sm font-semibold py-2 px-6 rounded-xl">Try Again</button>
-    </div>
+    // ---- URL params (bot isi tarah bhejta hai) ----
+    const params = new URLSearchParams(window.location.search);
+    const streamUrl = params.get('stream');   // existing /watch/... link (bot se aata hai)
+    const mediaType = params.get('type');     // "video" | "pdf" | "other"
+    const fileName  = params.get('name') || 'File';
 
-    <p class="text-gray-600 text-xs mt-10">POWERED BY NEXA ENGINE · SECURE</p>
+    document.getElementById('file-name').textContent = fileName;
 
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-        tg.ready();
+    const stepWatch = document.getElementById('step-watch');
+    const stepLoading = document.getElementById('step-loading');
+    const stepError = document.getElementById('step-error');
+    const stepPlayer = document.getElementById('step-player');
+    const loadingText = document.getElementById('loading-text');
+    const errorText = document.getElementById('error-text');
 
-        // ==================== CONFIG ====================
-        // Koyeb server ka base URL yahan daalo (jahan /miniverify route chalta hai).
-        const KOYEB_BASE_URL = "https://rigid-sybila-smoak-9f8653b9.koyeb.app/";
+    function showStep(step) {
+        [stepWatch, stepLoading, stepError, stepPlayer].forEach(el => el.classList.add('hidden'));
+        step.classList.remove('hidden');
+    }
+    function showError(msg) {
+        errorText.textContent = msg;
+        showStep(stepError);
+    }
 
-        // URL params: ?bot=<bot_id>&file=<payload>
-        const urlParams = new URLSearchParams(window.location.search);
-        const botId = urlParams.get('bot');
-        const filePayload = urlParams.get('file');
-
-        const stepWatch = document.getElementById('step-watch');
-        const stepLoading = document.getElementById('step-loading');
-        const stepDone = document.getElementById('step-done');
-        const stepError = document.getElementById('step-error');
-        const loadingText = document.getElementById('loading-text');
-        const errorText = document.getElementById('error-text');
-
-        function showStep(step) {
-            [stepWatch, stepLoading, stepDone, stepError].forEach(el => el.classList.add('hidden'));
-            step.classList.remove('hidden');
-        }
-
-        function showError(msg) {
-            errorText.textContent = msg;
-            showStep(stepError);
-        }
-
-        // ==================== AD STEP ====================
-        // Yahan asli ad SDK call hoga. Abhi ek simulated timer hai (testing ke liye).
-        // AdsGram example:
-        //   const AdController = window.Adsgram.init({ blockId: "YOUR_BLOCK_ID" });
-        //   AdController.show().then(onAdWatched).catch(() => showError("Ad failed. Please try again."));
-        function playAd(onAdWatched) {
-            showStep(stepLoading);
-            let seconds = 10;
-            loadingText.textContent = `Watching ad... ${seconds}s`;
-            const timer = setInterval(() => {
-                seconds -= 1;
-                if (seconds <= 0) {
-                    clearInterval(timer);
-                    onAdWatched();
-                } else {
-                    loadingText.textContent = `Watching ad... ${seconds}s`;
-                }
-            }, 1000);
-        }
-
-        async function unlockAndRedirect() {
-            loadingText.textContent = "Verifying...";
-            try {
-                const res = await fetch(`${KOYEB_BASE_URL}/miniverify`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        bot_id: botId,
-                        init_data: tg.initData,
-                        file: filePayload || undefined
-                    })
-                });
-                const data = await res.json();
-                if (data.ok) {
-                    showStep(stepDone);
-                    if (data.pushed) {
-                        // Bot ne seedha chat me "Get File" button bhej diya hai
-                        document.querySelector('#step-done p').textContent =
-                            "Verified! Check your chat for the file.";
-                        setTimeout(() => tg.close(), 1200);
-                    } else {
-                        // Fallback: push nahi hua, to seedha redirect try karo
-                        setTimeout(() => {
-                            tg.openTelegramLink(data.deep_link);
-                            tg.close();
-                        }, 800);
-                    }
-                } else {
-                    showError("Verification failed (" + (data.error || "unknown") + "). Please try again.");
-                }
-            } catch (e) {
-                showError("Network error. Please check your connection and try again.");
+    // ---- PART 3: Ad (abhi simulated timer; asli SDK yahan plug karo) ----
+    function playAd(onDone) {
+        showStep(stepLoading);
+        let seconds = 10;
+        loadingText.textContent = `Watching ad... ${seconds}s`;
+        const timer = setInterval(() => {
+            seconds -= 1;
+            if (seconds <= 0) {
+                clearInterval(timer);
+                onDone();
+            } else {
+                loadingText.textContent = `Watching ad... ${seconds}s`;
             }
+        }, 1000);
+    }
+
+    // ---- PART 4: Player ----
+    function openPlayer() {
+        if (!streamUrl) return showError("Invalid link: file not specified.");
+        showStep(stepPlayer);
+
+        if (mediaType === 'video') {
+            const v = document.getElementById('video-player');
+            v.classList.remove('hidden');
+            v.src = streamUrl;
+            v.play().catch(() => {}); // autoplay blocked ho to user khud play dabayega
+        } else if (mediaType === 'pdf') {
+            loadPdf(streamUrl);
+        } else {
+            document.getElementById('other-viewer').classList.remove('hidden');
+            document.getElementById('other-download').href = streamUrl;
         }
+    }
 
-        document.getElementById('watch-btn').addEventListener('click', () => {
-            if (!botId) {
-                return showError("Invalid link: bot not specified.");
-            }
-            if (!tg.initData) {
-                return showError("Please open this from inside Telegram.");
-            }
-            playAd(unlockAndRedirect);
-        });
+    // ---- 4b: PDF.js se PDF render karna ----
+    let pdfDoc = null, pageNum = 1;
+    async function loadPdf(url) {
+        try {
+            pdfjsLib.GlobalWorkerOptions.workerSrc =
+                "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+            const viewer = document.getElementById('pdf-viewer');
+            viewer.classList.remove('hidden');
+            document.getElementById('pdf-controls').classList.remove('hidden');
 
-        document.getElementById('retry-btn').addEventListener('click', () => {
-            showStep(stepWatch);
-        });
-    </script>
+            pdfDoc = await pdfjsLib.getDocument(url).promise;
+            pageNum = 1;
+            renderPage(pageNum);
+        } catch (e) {
+            showError("PDF load nahi ho paaya. (CORS ya link issue ho sakta hai)");
+        }
+    }
+
+    async function renderPage(num) {
+        const page = await pdfDoc.getPage(num);
+        const viewer = document.getElementById('pdf-viewer');
+        viewer.innerHTML = '';
+        const canvas = document.createElement('canvas');
+        canvas.id = 'pdf-canvas';
+        viewer.appendChild(canvas);
+
+        const viewport = page.getViewport({ scale: Math.min(1.2, (window.innerWidth - 40) / page.getViewport({scale:1}).width) });
+        const ctx = canvas.getContext('2d');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        await page.render({ canvasContext: ctx, viewport }).promise;
+
+        document.getElementById('pdf-page-info').textContent = `Page ${num} / ${pdfDoc.numPages}`;
+    }
+
+    document.getElementById('pdf-prev').addEventListener('click', () => {
+        if (pageNum > 1) { pageNum--; renderPage(pageNum); }
+    });
+    document.getElementById('pdf-next').addEventListener('click', () => {
+        if (pdfDoc && pageNum < pdfDoc.numPages) { pageNum++; renderPage(pageNum); }
+    });
+
+    // ---- Wire up buttons ----
+    document.getElementById('watch-btn').addEventListener('click', () => {
+        if (!streamUrl) return showError("Invalid link: file not specified.");
+        playAd(openPlayer);
+    });
+    document.getElementById('retry-btn').addEventListener('click', () => showStep(stepWatch));
+</script>
 </body>
 </html>
