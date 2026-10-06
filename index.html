@@ -68,7 +68,7 @@
 
         // ==================== CONFIG ====================
         // Koyeb server ka base URL yahan daalo (jahan /miniverify route chalta hai).
-        const KOYEB_BASE_URL = "https://rigid-sybila-smoak-9f8653b9.koyeb.app";
+        const KOYEB_BASE_URL = "https://REPLACE-WITH-YOUR-KOYEB-URL";
 
         // URL params: ?bot=<bot_id>&file=<payload>
         const urlParams = new URLSearchParams(window.location.search);
@@ -127,10 +127,18 @@
                 const data = await res.json();
                 if (data.ok) {
                     showStep(stepDone);
-                    setTimeout(() => {
-                        tg.openTelegramLink(data.deep_link);
-                        tg.close();
-                    }, 800);
+                    if (data.pushed) {
+                        // Bot ne seedha chat me "Get File" button bhej diya hai
+                        document.querySelector('#step-done p').textContent =
+                            "Verified! Check your chat for the file.";
+                        setTimeout(() => tg.close(), 1200);
+                    } else {
+                        // Fallback: push nahi hua, to seedha redirect try karo
+                        setTimeout(() => {
+                            tg.openTelegramLink(data.deep_link);
+                            tg.close();
+                        }, 800);
+                    }
                 } else {
                     showError("Verification failed (" + (data.error || "unknown") + "). Please try again.");
                 }
