@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<!-- ============================================================
+     PART 1: HEAD / CONFIG
+     ============================================================ -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Nexa Player</title>
@@ -18,12 +21,13 @@
         --plyr-color-main: #f97316;
         --plyr-video-control-background-hover: #ea580c;
     }
-    #pdf-frame { width: 100%; height: 78vh; border: 0; }
 </style>
 </head>
-<body class="flex flex-col items-center min-h-screen">
+<body class="flex flex-col items-center min-h-screen select-none">
 
-<!-- HEADER -->
+<!-- ============================================================
+     PART 2: HEADER
+     ============================================================ -->
 <div class="flex flex-col items-center mt-6 mb-4">
     <div class="w-16 h-16 bg-gradient-to-tr from-orange-500 to-red-500 rounded-2xl flex items-center justify-center shadow-[0_0_20px_rgba(249,115,22,0.5)] mb-2">
         <svg class="w-8 h-8 text-white translate-x-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
@@ -32,7 +36,9 @@
     <p id="file-name" class="text-gray-400 text-xs mt-1 truncate max-w-xs"></p>
 </div>
 
-<!-- AD GATE -->
+<!-- ============================================================
+     PART 3: AD GATE
+     ============================================================ -->
 <div id="step-watch" class="w-full max-w-md glass-panel rounded-2xl p-6 flex flex-col items-center gap-4 mx-4">
     <button id="watch-btn"
         class="bg-orange-500 hover:bg-red-600 text-white font-semibold py-3 px-8 rounded-xl transition-all shadow-[0_0_15px_rgba(249,115,22,0.6)] w-full">
@@ -51,15 +57,15 @@
     <button id="retry-btn" class="bg-orange-500 text-white text-sm font-semibold py-2 px-6 rounded-xl">Try Again</button>
 </div>
 
-<!-- PLAYER -->
+<!-- ============================================================
+     PART 4: PLAYER (Video & Fallback)
+     ============================================================ -->
 <div id="step-player" class="hidden w-full flex-1 flex flex-col items-center px-3 pb-6">
+
     <!-- 4a: Video player -->
     <video id="video-player" class="hidden w-full max-w-2xl rounded-xl" controls playsinline></video>
 
-    <!-- 4b: PDF Frame (Yahan dusri pdf.html file load hogi) -->
-    <iframe id="pdf-frame" class="hidden w-full max-w-2xl glass-panel rounded-2xl overflow-hidden"></iframe>
-
-    <!-- 4c: Unsupported type fallback -->
+    <!-- 4b: Unsupported type fallback -->
     <div id="other-viewer" class="hidden w-full max-w-md glass-panel rounded-2xl p-6 flex flex-col items-center gap-4">
         <p class="text-gray-300 text-sm text-center">Ye file type seedha preview nahi ho sakti.</p>
         <a id="other-download" href="#" target="_blank"
@@ -69,6 +75,9 @@
 
 <p class="text-gray-600 text-xs mt-auto mb-4">POWERED BY NEXA ENGINE · SECURE</p>
 
+<!-- ============================================================
+     PART 5: LOGIC
+     ============================================================ -->
 <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
@@ -119,27 +128,30 @@
 
     function openPlayer() {
         if (!streamUrl) return showError("Invalid link: file not specified.");
+
+        if (isPdf) {
+            // Seedha pdf.html par bhej dega (No Nested Iframe = No Black Screen!)
+            window.location.href = `pdf.html?stream=${encodeURIComponent(streamUrl)}&name=${encodeURIComponent(fileName)}`;
+            return;
+        }
+
         showStep(stepPlayer);
 
         if (isVideo) {
             const v = document.getElementById('video-player');
             v.classList.remove('hidden');
             v.src = streamUrl;
+
             if (!plyrInstance) {
                 plyrInstance = new Plyr(v, {
-                    controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'fullscreen'],
+                    controls: [
+                        'play-large', 'play', 'progress', 'current-time',
+                        'mute', 'volume', 'settings', 'fullscreen'
+                    ],
                     settings: ['speed'],
                 });
             }
             v.play().catch(() => {});
-        } else if (isPdf) {
-            // YAHAN SE DUSRI HTML FILE (pdf.html) LINK HO RAHI HAI:
-            const pdfFrame = document.getElementById('pdf-frame');
-            pdfFrame.classList.remove('hidden');
-            pdfFrame.src = `pdf.html?stream=${encodeURIComponent(streamUrl)}&name=${encodeURIComponent(fileName)}`;
-
-            // Note: Agar aapko box ke andar nahi balki poora naya page kholna ho, toh upar ki 3 line hata kar ye likh sakte ho:
-            // window.location.href = `pdf.html?stream=${encodeURIComponent(streamUrl)}&name=${encodeURIComponent(fileName)}`;
         } else {
             document.getElementById('other-viewer').classList.remove('hidden');
             document.getElementById('other-download').href = streamUrl;
