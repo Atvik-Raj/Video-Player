@@ -14,7 +14,10 @@
 <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
 <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
 
-<!-- ==================== MONETAG SDK (Zone: 11850665) ==================== -->
+<!-- ==================== AD NETWORKS (AdsGram + Monetag) ==================== -->
+<!-- 1. AdsGram SDK -->
+<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+<!-- 2. Monetag SDK (Zone: 11850665) -->
 <script src="//libtl.com/sdk.js" data-zone="11850665" data-sdk="show_11850665"></script>
 
 <style>
@@ -86,6 +89,18 @@
     tg.expand();
     tg.ready();
 
+    // AdsGram Block ID: 53904
+    const ADSGRAM_BLOCK_ID = "53904";
+
+    let AdController = null;
+    if (window.Adsgram) {
+        try {
+            AdController = window.Adsgram.init({ blockId: ADSGRAM_BLOCK_ID });
+        } catch (e) {
+            console.warn("AdsGram init error:", e);
+        }
+    }
+
     const params = new URLSearchParams(window.location.search);
     const streamUrl = params.get('stream');
     const rawType   = (params.get('type') || '').toLowerCase();
@@ -112,21 +127,16 @@
         showStep(stepError);
     }
 
-    // ---- PART 3: MONETAG REWARDED INTERSTITIAL (show_11850665) ----
-    function playAd(onDone) {
-        showStep(stepLoading);
-        loadingText.textContent = "Loading ad...";
-
+    // ---- PART 3: DUAL AD ENGINE (1. AdsGram 53904 -> 2. Monetag 11850665 -> 3. Timer) ----
+    function playMonetagOrFallback(onDone) {
         if (typeof show_11850665 === 'function') {
             show_11850665().then(() => {
-                // User watched the ad -> Open Player
                 onDone();
             }).catch((err) => {
-                console.warn("Ad skipped or failed to load, opening player:", err);
+                console.warn("Monetag skipped/failed, opening player:", err);
                 onDone();
             });
         } else {
-            // Backup 5s timer agar user ke phone me ad script block ho
             let seconds = 5;
             loadingText.textContent = `Opening player in ${seconds}s...`;
             const timer = setInterval(() => {
@@ -141,13 +151,29 @@
         }
     }
 
+    function playAd(onDone) {
+        showStep(stepLoading);
+        loadingText.textContent = "Loading ad...";
+
+        // Pehle AdsGram (53904) dikhayega; agar no-fill aaya toh turant Monetag (11850665) chalayega!
+        if (AdController) {
+            AdController.show().then((result) => {
+                onDone();
+            }).catch((err) => {
+                console.warn("AdsGram no-fill/closed, switching to Monetag:", err);
+                playMonetagOrFallback(onDone);
+            });
+        } else {
+            playMonetagOrFallback(onDone);
+        }
+    }
+
     let plyrInstance = null;
 
     function openPlayer() {
         if (!streamUrl) return showError("Invalid link: file not specified.");
 
         if (isPdf) {
-            // Seedha pdf.html khol dega
             window.location.href = `pdf.html?stream=${encodeURIComponent(streamUrl)}&name=${encodeURIComponent(fileName)}`;
             return;
         }
