@@ -10,9 +10,9 @@
 <style>
     html, body { background-color: #120a08; color: #fff; height: 100%; margin: 0; overflow: hidden; }
     .glass-btn { 
-        background: rgba(18, 10, 8, 0.75); 
-        backdrop-filter: blur(10px); 
-        -webkit-backdrop-filter: blur(10px);
+        background: rgba(18, 10, 8, 0.78); 
+        backdrop-filter: blur(12px); 
+        -webkit-backdrop-filter: blur(12px);
         border: 1px solid rgba(255, 255, 255, 0.2); 
     }
     #pdf-scroll-container::-webkit-scrollbar { width: 5px; height: 5px; }
@@ -36,15 +36,35 @@
         <button id="zoom-in-btn" class="text-gray-200 hover:text-orange-400 font-bold px-1.5 text-sm">+</button>
     </div>
 
-    <!-- Top-Right: Transparent Quality & Infinity/Page Mode Controls -->
+    <!-- Top-Right: Page Badge + Quality Dropdown + Infinity/Page Mode -->
     <div class="absolute top-2.5 right-2.5 z-30 flex items-center gap-1.5">
         <span id="pdf-page-indicator" class="glass-btn text-[11px] font-medium text-gray-200 px-2 py-1.5 rounded-lg shadow-lg">
             1 / 1
         </span>
-        <button id="pdf-quality-btn" 
-            class="glass-btn hover:bg-orange-500/30 active:scale-95 text-[11px] font-bold text-orange-400 px-2.5 py-1.5 rounded-lg transition-all shadow-lg">
-            HD
-        </button>
+
+        <!-- Quality Dropdown Wrapper -->
+        <div class="relative">
+            <button id="pdf-quality-btn" 
+                class="glass-btn hover:bg-orange-500/30 active:scale-95 text-[11px] font-bold text-orange-400 px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition-all shadow-lg">
+                <span id="quality-current-text">HD</span>
+                <span class="text-[9px] text-gray-300">▼</span>
+            </button>
+
+            <!-- Dropdown Menu -->
+            <div id="quality-dropdown-menu" class="hidden absolute right-0 mt-1.5 w-28 glass-btn rounded-xl overflow-hidden shadow-2xl flex flex-col z-40 border border-orange-500/30">
+                <button data-q="0" class="quality-opt text-left px-3 py-2 text-xs text-gray-200 hover:bg-orange-500/30 flex justify-between items-center">
+                    <span>SD</span><span class="text-[10px] text-gray-400">Fast</span>
+                </button>
+                <button data-q="1" class="quality-opt text-left px-3 py-2 text-xs text-orange-400 font-bold bg-orange-500/10 hover:bg-orange-500/30 flex justify-between items-center border-y border-white/10">
+                    <span>HD</span><span class="text-[10px] text-gray-300">Clear</span>
+                </button>
+                <button data-q="2" class="quality-opt text-left px-3 py-2 text-xs text-gray-200 hover:bg-orange-500/30 flex justify-between items-center">
+                    <span>ULTRA</span><span class="text-[10px] text-gray-400">4K</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mode Toggle Button (Infinity vs Page Mode) -->
         <button id="pdf-mode-btn" 
             class="glass-btn hover:bg-orange-500/30 active:scale-95 text-xs font-semibold text-white px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition-all shadow-lg">
             <span id="pdf-mode-icon" class="text-orange-400 text-sm leading-none">∞</span>
@@ -59,19 +79,28 @@
     </div>
 
     <!-- Engine 1: PDF.js Canvas Container -->
-    <div id="pdf-scroll-container" class="w-full h-full overflow-auto p-2.5 pt-12 flex flex-col items-center gap-3 scroll-smooth"></div>
+    <div id="pdf-scroll-container" class="w-full h-full overflow-auto p-2.5 pt-12 pb-14 flex flex-col items-center gap-3 scroll-smooth"></div>
 
     <!-- Engine 2: Cloud Fallback Container -->
     <div id="pdf-iframe-wrapper" class="hidden w-full h-full relative overflow-hidden">
         <iframe id="pdf-cloud-iframe" class="w-full h-full border-0" allowfullscreen></iframe>
     </div>
 
-    <!-- Bottom Floating Controls (Page Mode) -->
-    <div id="pdf-page-controls" class="hidden absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 glass-btn px-4 py-2 rounded-xl shadow-xl">
+    <!-- Bottom Center: Prev / Next Controls (Page Mode) -->
+    <div id="pdf-page-controls" class="hidden absolute bottom-3.5 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 glass-btn px-4 py-2 rounded-xl shadow-xl">
         <button id="prev-page-btn" class="text-white hover:text-orange-400 disabled:opacity-30 text-sm font-bold px-2 py-0.5 transition">◀ Prev</button>
         <div class="h-4 w-[1px] bg-white/15"></div>
         <button id="next-page-btn" class="text-white hover:text-orange-400 disabled:opacity-30 text-sm font-bold px-2 py-0.5 transition">Next ▶</button>
     </div>
+
+    <!-- Bottom Right: Floating Full Screen Button -->
+    <button id="fullscreen-btn" 
+        class="absolute bottom-3.5 right-3 z-30 glass-btn hover:bg-orange-500/30 active:scale-95 text-xs font-semibold text-white px-3 py-2 rounded-xl flex items-center gap-1.5 shadow-xl transition-all">
+        <svg id="fs-icon-expand" class="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4h4M20 8V4h-4M4 16v4h4M20 16v4h-4"/>
+        </svg>
+        <span id="fs-label">Full</span>
+    </button>
 
 <script>
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -85,6 +114,7 @@
     let currentPage = 1;
     let totalPages = 1;
     let renderedPages = new Set();
+    let isFullscreen = false;
 
     const qualityLevels = [
         { label: 'SD', scale: 1.2 },
@@ -103,6 +133,8 @@
     const pdfModeIcon = document.getElementById('pdf-mode-icon');
     const pdfModeLabel = document.getElementById('pdf-mode-label');
     const pdfQualityBtn = document.getElementById('pdf-quality-btn');
+    const qualityCurrentText = document.getElementById('quality-current-text');
+    const qualityDropdownMenu = document.getElementById('quality-dropdown-menu');
     const pdfPageIndicator = document.getElementById('pdf-page-indicator');
     const pdfPageControls = document.getElementById('pdf-page-controls');
     const prevPageBtn = document.getElementById('prev-page-btn');
@@ -110,6 +142,8 @@
     const zoomInBtn = document.getElementById('zoom-in-btn');
     const zoomOutBtn = document.getElementById('zoom-out-btn');
     const zoomLabel = document.getElementById('zoom-label');
+    const fullscreenBtn = document.getElementById('fullscreen-btn');
+    const fsLabel = document.getElementById('fs-label');
 
     async function loadPdfDocument(urlToTry) {
         const loadingTask = pdfjsLib.getDocument({ url: urlToTry, withCredentials: false });
@@ -264,16 +298,42 @@
         nextPageBtn.disabled = currentPage >= totalPages;
     }
 
-    pdfQualityBtn.addEventListener('click', () => {
-        currentQualityIndex = (currentQualityIndex + 1) % qualityLevels.length;
-        pdfQualityBtn.textContent = qualityLevels[currentQualityIndex].label;
-        if (!usingFallbackIframe && pdfDoc) {
-            renderedPages.clear();
-            renderPage(currentPage, true);
-            if (currentPage + 1 <= totalPages) renderPage(currentPage + 1, true);
-        }
+    // Quality Dropdown Open / Close & Selection
+    pdfQualityBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        qualityDropdownMenu.classList.toggle('hidden');
     });
 
+    document.querySelectorAll('.quality-opt').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            currentQualityIndex = parseInt(btn.dataset.q, 10);
+            qualityCurrentText.textContent = qualityLevels[currentQualityIndex].label;
+            qualityDropdownMenu.classList.add('hidden');
+
+            // Highlight selected option in dropdown
+            document.querySelectorAll('.quality-opt').forEach((el, idx) => {
+                if (idx === currentQualityIndex) {
+                    el.classList.add('text-orange-400', 'font-bold', 'bg-orange-500/10');
+                } else {
+                    el.classList.remove('text-orange-400', 'font-bold', 'bg-orange-500/10');
+                }
+            });
+
+            if (!usingFallbackIframe && pdfDoc) {
+                renderedPages.clear();
+                renderPage(currentPage, true);
+                if (currentPage + 1 <= totalPages) renderPage(currentPage + 1, true);
+            }
+        });
+    });
+
+    // Close dropdown when tapping anywhere outside
+    document.addEventListener('click', () => {
+        qualityDropdownMenu.classList.add('hidden');
+    });
+
+    // Zoom In / Out
     function updateZoom(newZoom) {
         currentZoom = Math.min(250, Math.max(75, newZoom));
         zoomLabel.textContent = `${currentZoom}%`;
@@ -283,11 +343,13 @@
     zoomInBtn.addEventListener('click', () => updateZoom(currentZoom + 25));
     zoomOutBtn.addEventListener('click', () => updateZoom(currentZoom - 25));
 
+    // Infinity / Page Mode Toggle
     pdfModeBtn.addEventListener('click', () => {
         pdfMode = pdfMode === 'infinity' ? 'page' : 'infinity';
         applyPdfMode();
     });
 
+    // Prev / Next Page
     prevPageBtn.addEventListener('click', () => {
         if (currentPage > 1) { currentPage--; applyPdfMode(); }
     });
@@ -295,9 +357,23 @@
         if (usingFallbackIframe || currentPage < totalPages) { currentPage++; applyPdfMode(); }
     });
 
-    // Start Viewer Automatically
+    // Bottom-Right Fullscreen Button
+    fullscreenBtn.addEventListener('click', () => {
+        isFullscreen = !isFullscreen;
+        fsLabel.textContent = isFullscreen ? 'Exit' : 'Full';
+
+        // Tell parent index.html to expand the iframe across the whole mobile screen
+        window.parent.postMessage({ action: 'toggleFullscreen' }, '*');
+
+        // Also try native fullscreen API if supported
+        if (isFullscreen && document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen().catch(() => {});
+        } else if (!isFullscreen && document.exitFullscreen && document.fullscreenElement) {
+            document.exitFullscreen().catch(() => {});
+        }
+    });
+
     initPdfViewer(streamUrl);
 </script>
 </body>
-  </html>
-  
+</html>
