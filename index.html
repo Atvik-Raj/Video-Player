@@ -10,8 +10,10 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 
-<!-- PDF.js (sirf PDF type ke liye use hota hai) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<!-- Plyr (video player skin) -->
+<link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+<script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
+
 
 <!-- ==================== AD SDK (yahan network ka SDK lagao) ====================
      AdsGram:  <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
@@ -22,8 +24,12 @@
 <style>
     html, body { background-color: #120a08; color: #fff; height: 100%; margin: 0; }
     .glass-panel { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); }
-    #pdf-canvas { max-width: 100%; display: block; margin: 0 auto; }
-    #pdf-viewer { overflow-y: auto; }
+    /* Plyr ko orange-red neon theme me rangna */
+    :root {
+        --plyr-color-main: #f97316;
+        --plyr-video-control-background-hover: #ea580c;
+    }
+    #pdf-viewer { width: 100%; height: 75vh; border: 0; }
 </style>
 </head>
 <body class="flex flex-col items-center min-h-screen">
@@ -68,13 +74,8 @@
     <!-- 4a: Video player -->
     <video id="video-player" class="hidden w-full max-w-2xl rounded-xl" controls playsinline></video>
 
-    <!-- 4b: PDF viewer -->
-    <div id="pdf-viewer" class="hidden w-full max-w-2xl glass-panel rounded-xl p-2"></div>
-    <div id="pdf-controls" class="hidden flex items-center gap-4 mt-3">
-        <button id="pdf-prev" class="bg-orange-500 text-white px-4 py-1 rounded-lg">‹ Prev</button>
-        <span id="pdf-page-info" class="text-sm text-gray-300"></span>
-        <button id="pdf-next" class="bg-orange-500 text-white px-4 py-1 rounded-lg">Next ›</button>
-    </div>
+    <!-- 4b: PDF viewer (browser ka native PDF renderer, CORS-free) -->
+    <iframe id="pdf-viewer" class="hidden w-full max-w-2xl glass-panel rounded-xl"></iframe>
 
     <!-- 4c: Unsupported type fallback -->
     <div id="other-viewer" class="hidden w-full max-w-md glass-panel rounded-2xl p-6 flex flex-col items-center gap-4">
@@ -135,6 +136,8 @@
     }
 
     // ---- PART 4: Player ----
+    let plyrInstance = null;
+
     function openPlayer() {
         if (!streamUrl) return showError("Invalid link: file not specified.");
         showStep(stepPlayer);
@@ -143,56 +146,28 @@
             const v = document.getElementById('video-player');
             v.classList.remove('hidden');
             v.src = streamUrl;
+
+            // Plyr sirf ek baar setup karo (dobara openPlayer() chale to purana instance reuse ho)
+            if (!plyrInstance) {
+                plyrInstance = new Plyr(v, {
+                    controls: [
+                        'play-large', 'play', 'progress', 'current-time',
+                        'mute', 'volume', 'settings', 'fullscreen'
+                    ],
+                    settings: ['speed'],
+                });
+            }
             v.play().catch(() => {}); // autoplay blocked ho to user khud play dabayega
         } else if (mediaType === 'pdf') {
-            loadPdf(streamUrl);
+            // Native browser PDF viewer — koi fetch/CORS nahi, seedha iframe load
+            const viewer = document.getElementById('pdf-viewer');
+            viewer.classList.remove('hidden');
+            viewer.src = streamUrl;
         } else {
             document.getElementById('other-viewer').classList.remove('hidden');
             document.getElementById('other-download').href = streamUrl;
         }
     }
-
-    // ---- 4b: PDF.js se PDF render karna ----
-    let pdfDoc = null, pageNum = 1;
-    async function loadPdf(url) {
-        try {
-            pdfjsLib.GlobalWorkerOptions.workerSrc =
-                "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-            const viewer = document.getElementById('pdf-viewer');
-            viewer.classList.remove('hidden');
-            document.getElementById('pdf-controls').classList.remove('hidden');
-
-            pdfDoc = await pdfjsLib.getDocument(url).promise;
-            pageNum = 1;
-            renderPage(pageNum);
-        } catch (e) {
-            showError("PDF load nahi ho paaya. (CORS ya link issue ho sakta hai)");
-        }
-    }
-
-    async function renderPage(num) {
-        const page = await pdfDoc.getPage(num);
-        const viewer = document.getElementById('pdf-viewer');
-        viewer.innerHTML = '';
-        const canvas = document.createElement('canvas');
-        canvas.id = 'pdf-canvas';
-        viewer.appendChild(canvas);
-
-        const viewport = page.getViewport({ scale: Math.min(1.2, (window.innerWidth - 40) / page.getViewport({scale:1}).width) });
-        const ctx = canvas.getContext('2d');
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-        await page.render({ canvasContext: ctx, viewport }).promise;
-
-        document.getElementById('pdf-page-info').textContent = `Page ${num} / ${pdfDoc.numPages}`;
-    }
-
-    document.getElementById('pdf-prev').addEventListener('click', () => {
-        if (pageNum > 1) { pageNum--; renderPage(pageNum); }
-    });
-    document.getElementById('pdf-next').addEventListener('click', () => {
-        if (pdfDoc && pageNum < pdfDoc.numPages) { pageNum++; renderPage(pageNum); }
-    });
 
     // ---- Wire up buttons ----
     document.getElementById('watch-btn').addEventListener('click', () => {
