@@ -24,28 +24,7 @@
         --plyr-color-main: #f97316;
         --plyr-video-control-background-hover: #ea580c;
     }
-    /* PDF Preload Layer: Pehle peeche chhupa rahega, Ad ke baad 0.1s me samne aayega */
-    .pdf-preload-hidden {
-        position: fixed;
-        inset: 0;
-        width: 100vw;
-        height: 100vh;
-        opacity: 0;
-        pointer-events: none;
-        z-index: -10;
-        border: 0;
-    }
-    .pdf-preload-active {
-        position: fixed;
-        inset: 0;
-        width: 100vw;
-        height: 100vh;
-        opacity: 1;
-        pointer-events: auto;
-        z-index: 9999;
-        border: 0;
-        background: #120a08;
-    }
+    .plyr { width: 100%; max-width: 42rem; border-radius: 0.75rem; overflow: hidden; }
 </style>
 </head>
 <body class="flex flex-col items-center min-h-screen select-none">
@@ -69,7 +48,7 @@
         class="bg-orange-500 hover:bg-red-600 text-white font-semibold py-3 px-8 rounded-xl transition-all shadow-[0_0_15px_rgba(249,115,22,0.6)] w-full">
         ▶ Watch Ad & Open Player
     </button>
-    <p id="preload-status" class="text-gray-400 text-xs text-center">Short ad dekhne ke baad player khul jaayega.</p>
+    <p class="text-gray-400 text-xs text-center">Short ad dekhne ke baad player khul jaayega.</p>
 </div>
 
 <div id="step-loading" class="hidden w-full max-w-md glass-panel rounded-2xl p-6 flex flex-col items-center gap-3 mx-4">
@@ -83,12 +62,26 @@
 </div>
 
 <!-- ============================================================
-     PART 4: PLAYER (Video, Preloaded PDF & Fallback)
+     PART 4: PLAYER (Video & Fallback)
      ============================================================ -->
 <div id="step-player" class="hidden w-full flex-1 flex flex-col items-center px-3 pb-6">
 
-    <!-- 4a: Video player -->
-    <video id="video-player" class="hidden w-full max-w-2xl rounded-xl" controls playsinline preload="metadata"></video>
+    <!-- 4a: Video Container -->
+    <div id="video-container" class="hidden w-full max-w-2xl flex flex-col items-center gap-3">
+        <video id="video-player" class="w-full rounded-xl" controls playsinline></video>
+
+        <!-- Helpful Controls if Video takes time on Koyeb -->
+        <div class="flex items-center gap-2 w-full justify-center mt-1">
+            <button id="reload-video-btn"
+                class="glass-panel hover:bg-orange-500/20 text-xs text-orange-400 font-semibold py-2 px-4 rounded-xl">
+                ↻ Reload Stream
+            </button>
+            <a id="direct-open-btn" href="#" target="_blank"
+               class="glass-panel hover:bg-orange-500/20 text-xs text-gray-300 font-semibold py-2 px-4 rounded-xl">
+                ⬇ Direct Play / Download
+            </a>
+        </div>
+    </div>
 
     <!-- 4b: Unsupported type fallback -->
     <div id="other-viewer" class="hidden w-full max-w-md glass-panel rounded-2xl p-6 flex flex-col items-center gap-4">
@@ -97,9 +90,6 @@
            class="bg-orange-500 text-white font-semibold py-2 px-6 rounded-xl">⬇ Download</a>
     </div>
 </div>
-
-<!-- 4c: BACKGROUND PRELOAD CONTAINER FOR PDF (Page khulte hi peeche load hona shuru ho jayega) -->
-<iframe id="pdf-preloader" class="pdf-preload-hidden" allowfullscreen></iframe>
 
 <p class="text-gray-600 text-xs mt-auto mb-4">POWERED BY NEXA ENGINE · SECURE</p>
 
@@ -117,7 +107,8 @@
     const fileName  = params.get('name') || 'File';
 
     const isPdf = rawType === 'pdf' || fileName.toLowerCase().endsWith('.pdf') || (streamUrl && streamUrl.toLowerCase().includes('.pdf'));
-    const isVideo = rawType === 'video' || /\.(mp4|mkv|webm|mov)$/i.test(fileName);
+    // Default to video if type is video OR if bot sent generic "file" without pdf type
+    const isVideo = !isPdf && (rawType === 'video' || rawType === '' || /\.(mp4|mkv|webm|mov|avi)$/i.test(fileName) || fileName === 'file');
 
     document.getElementById('file-name').textContent = fileName;
 
@@ -127,27 +118,8 @@
     const stepPlayer = document.getElementById('step-player');
     const loadingText = document.getElementById('loading-text');
     const errorText = document.getElementById('error-text');
-    const preloadStatus = document.getElementById('preload-status');
-    const pdfPreloader = document.getElementById('pdf-preloader');
+    const videoContainer = document.getElementById('video-container');
     const videoEl = document.getElementById('video-player');
-
-    // =====================================================
-    // SMART BACKGROUND PRE-LOADER (Ad se pehle hi PDF/Video तैयार रखेगा)
-    // =====================================================
-    if (streamUrl) {
-        if (isPdf) {
-            preloadStatus.textContent = "⚡ Pre-loading PDF in background...";
-            pdfPreloader.src = `pdf.html?stream=${encodeURIComponent(streamUrl)}&name=${encodeURIComponent(fileName)}`;
-            pdfPreloader.onload = () => {
-                preloadStatus.textContent = "✅ PDF Ready! Watch short ad to open.";
-                preloadStatus.classList.replace('text-gray-400', 'text-green-400');
-            };
-        } else if (isVideo) {
-            // Video metadata bhi background me ready rakho
-            videoEl.src = streamUrl;
-            videoEl.load();
-        }
-    }
 
     function showStep(step) {
         [stepWatch, stepLoading, stepError, stepPlayer].forEach(el => el.classList.add('hidden'));
@@ -158,10 +130,10 @@
         showStep(stepError);
     }
 
-    // ---- PART 3: ONLY MONETAG AD (show_11850665) ----
+    // ---- PART 3: MONETAG AD (show_11850665) ----
     function playAd(onDone) {
         showStep(stepLoading);
-        loadingText.textContent = "Loading Monetag Ad...";
+        loadingText.textContent = "Loading ad...";
 
         if (typeof show_11850665 === 'function') {
             show_11850665().then(() => {
@@ -187,32 +159,48 @@
 
     let plyrInstance = null;
 
+    function startVideoStream() {
+        videoContainer.classList.remove('hidden');
+        document.getElementById('direct-open-btn').href = streamUrl;
+
+        // 1. Setup Plyr FIRST before setting video src (Fixes 00:00 Black Screen bug!)
+        if (!plyrInstance) {
+            plyrInstance = new Plyr(videoEl, {
+                controls: [
+                    'play-large', 'play', 'progress', 'current-time',
+                    'mute', 'volume', 'settings', 'fullscreen'
+                ],
+                settings: ['speed'],
+            });
+        }
+
+        // 2. Now set stream URL and load fresh connection
+        videoEl.src = streamUrl;
+        videoEl.load();
+        videoEl.play().catch(() => {});
+    }
+
+    // Reload button if Koyeb stream takes time to wake up
+    document.getElementById('reload-video-btn').addEventListener('click', () => {
+        const cur = videoEl.currentTime || 0;
+        videoEl.src = streamUrl + (streamUrl.includes('?') ? '&' : '?') + 't=' + Date.now();
+        videoEl.load();
+        videoEl.currentTime = cur;
+        videoEl.play().catch(() => {});
+    });
+
     function openPlayer() {
         if (!streamUrl) return showError("Invalid link: file not specified.");
 
         if (isPdf) {
-            // Kyunki PDF peeche load ho chuki hai, bas 0.1s me samne le aao!
-            pdfPreloader.classList.remove('pdf-preload-hidden');
-            pdfPreloader.classList.add('pdf-preload-active');
+            window.location.href = `pdf.html?stream=${encodeURIComponent(streamUrl)}&name=${encodeURIComponent(fileName)}`;
             return;
         }
 
         showStep(stepPlayer);
 
         if (isVideo) {
-            videoEl.classList.remove('hidden');
-            if (!videoEl.src) videoEl.src = streamUrl;
-
-            if (!plyrInstance) {
-                plyrInstance = new Plyr(videoEl, {
-                    controls: [
-                        'play-large', 'play', 'progress', 'current-time',
-                        'mute', 'volume', 'settings', 'fullscreen'
-                    ],
-                    settings: ['speed'],
-                });
-            }
-            videoEl.play().catch(() => {});
+            startVideoStream();
         } else {
             document.getElementById('other-viewer').classList.remove('hidden');
             document.getElementById('other-download').href = streamUrl;
