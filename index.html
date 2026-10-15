@@ -14,31 +14,15 @@
 <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
 <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
 
-<!-- PDF.js -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<!-- ==================== MONETAG SDK (Zone: 11850665) ==================== -->
+<script src="//libtl.com/sdk.js" data-zone="11850665" data-sdk="show_11850665"></script>
 
 <style>
     html, body { background-color: #120a08; color: #fff; height: 100%; margin: 0; }
     .glass-panel { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); }
-    .glass-btn { 
-        background: rgba(18, 10, 8, 0.65); 
-        backdrop-filter: blur(10px); 
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2); 
-    }
     :root {
         --plyr-color-main: #f97316;
         --plyr-video-control-background-hover: #ea580c;
-    }
-    #pdf-scroll-container::-webkit-scrollbar { width: 5px; }
-    #pdf-scroll-container::-webkit-scrollbar-track { background: transparent; }
-    #pdf-scroll-container::-webkit-scrollbar-thumb { background: rgba(249, 115, 22, 0.4); border-radius: 10px; }
-    .pdf-page-canvas {
-        width: 100%;
-        height: auto;
-        border-radius: 0.5rem;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-        background-color: #1a110e;
     }
 </style>
 </head>
@@ -47,18 +31,18 @@
 <!-- ============================================================
      PART 2: HEADER
      ============================================================ -->
-<div class="flex flex-col items-center mt-5 mb-3">
-    <div class="w-14 h-14 bg-gradient-to-tr from-orange-500 to-red-500 rounded-2xl flex items-center justify-center shadow-[0_0_20px_rgba(249,115,22,0.5)] mb-2">
-        <svg class="w-7 h-7 text-white translate-x-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+<div class="flex flex-col items-center mt-6 mb-4">
+    <div class="w-16 h-16 bg-gradient-to-tr from-orange-500 to-red-500 rounded-2xl flex items-center justify-center shadow-[0_0_20px_rgba(249,115,22,0.5)] mb-2">
+        <svg class="w-8 h-8 text-white translate-x-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
     </div>
-    <h1 class="text-lg font-bold tracking-wide">Nexa Player</h1>
-    <p id="file-name" class="text-gray-400 text-xs mt-0.5 truncate max-w-xs"></p>
+    <h1 class="text-xl font-bold tracking-wide">Nexa Player</h1>
+    <p id="file-name" class="text-gray-400 text-xs mt-1 truncate max-w-xs"></p>
 </div>
 
 <!-- ============================================================
      PART 3: AD GATE
      ============================================================ -->
-<div id="step-watch" class="w-full max-w-md glass-panel rounded-2xl p-6 flex flex-col items-center gap-4 mx-4 mt-4">
+<div id="step-watch" class="w-full max-w-md glass-panel rounded-2xl p-6 flex flex-col items-center gap-4 mx-4">
     <button id="watch-btn"
         class="bg-orange-500 hover:bg-red-600 text-white font-semibold py-3 px-8 rounded-xl transition-all shadow-[0_0_15px_rgba(249,115,22,0.6)] w-full">
         ▶ Watch Ad & Open Player
@@ -66,69 +50,25 @@
     <p class="text-gray-500 text-xs text-center">Short ad dekhne ke baad player khul jaayega.</p>
 </div>
 
-<div id="step-loading" class="hidden w-full max-w-md glass-panel rounded-2xl p-6 flex flex-col items-center gap-3 mx-4 mt-4">
+<div id="step-loading" class="hidden w-full max-w-md glass-panel rounded-2xl p-6 flex flex-col items-center gap-3 mx-4">
     <div class="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
     <p id="loading-text" class="text-gray-300 text-sm">Loading ad...</p>
 </div>
 
-<div id="step-error" class="hidden w-full max-w-md glass-panel rounded-2xl p-6 flex flex-col items-center gap-3 border border-red-500/30 mx-4 mt-4">
-    <p class="text-red-400 font-semibold text-center text-sm" id="error-text">Something went wrong.</p>
+<div id="step-error" class="hidden w-full max-w-md glass-panel rounded-2xl p-6 flex flex-col items-center gap-3 border border-red-500/30 mx-4">
+    <p class="text-red-400 font-semibold text-center" id="error-text">Something went wrong.</p>
     <button id="retry-btn" class="bg-orange-500 text-white text-sm font-semibold py-2 px-6 rounded-xl">Try Again</button>
 </div>
 
 <!-- ============================================================
-     PART 4: PLAYER
+     PART 4: PLAYER (Video & Fallback)
      ============================================================ -->
-<div id="step-player" class="hidden w-full flex-1 flex flex-col items-center px-3 pb-4">
+<div id="step-player" class="hidden w-full flex-1 flex flex-col items-center px-3 pb-6">
 
     <!-- 4a: Video player -->
-    <video id="video-player" class="hidden w-full max-w-2xl rounded-xl" controls playsinline></video>
+    <video id="video-player" class="hidden w-full max-w-2xl rounded-xl" controls playsinline preload="metadata"></video>
 
-    <!-- 4b: Advanced Dual-Engine PDF Viewer Box -->
-    <div id="pdf-wrapper" class="hidden relative w-full max-w-2xl h-[76vh] glass-panel rounded-2xl overflow-hidden flex flex-col">
-        
-        <!-- Top-Right Transparent Floating Controls -->
-        <div class="absolute top-3 right-3 z-30 flex items-center gap-2">
-            <!-- Current Page Indicator -->
-            <span id="pdf-page-indicator" class="glass-btn text-[11px] font-medium text-gray-200 px-2.5 py-1.5 rounded-lg shadow-lg">
-                PDF
-            </span>
-
-            <!-- Mode Toggle Button (Infinity vs Page-by-Page) -->
-            <button id="pdf-mode-btn" 
-                class="glass-btn hover:bg-orange-500/30 active:scale-95 text-xs font-semibold text-white px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all shadow-lg">
-                <span id="pdf-mode-icon" class="text-orange-400 text-sm leading-none">∞</span>
-                <span id="pdf-mode-label">Infinity</span>
-            </button>
-        </div>
-
-        <!-- PDF Loading Spinner Inside Box -->
-        <div id="pdf-loader" class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-[#120a08]/90 backdrop-blur-sm">
-            <div class="w-9 h-9 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mb-2"></div>
-            <p id="pdf-loader-text" class="text-xs text-gray-300">Loading PDF...</p>
-        </div>
-
-        <!-- Engine 1: PDF.js Canvas Container -->
-        <div id="pdf-scroll-container" class="w-full h-full overflow-y-auto p-3 pt-12 flex flex-col items-center gap-3 scroll-smooth"></div>
-
-        <!-- Engine 2: CORS-Free Cloud Fallback Container (Google GView) -->
-        <div id="pdf-iframe-wrapper" class="hidden w-full h-full relative overflow-hidden">
-            <iframe id="pdf-cloud-iframe" class="w-full h-full border-0" allowfullscreen></iframe>
-        </div>
-
-        <!-- Bottom Floating Controls (Page Mode) -->
-        <div id="pdf-page-controls" class="hidden absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 glass-btn px-4 py-2 rounded-xl shadow-xl">
-            <button id="prev-page-btn" class="text-white hover:text-orange-400 disabled:opacity-30 text-sm font-bold px-2 py-0.5 transition">
-                ◀ Prev
-            </button>
-            <div class="h-4 w-[1px] bg-white/15"></div>
-            <button id="next-page-btn" class="text-white hover:text-orange-400 disabled:opacity-30 text-sm font-bold px-2 py-0.5 transition">
-                Next ▶
-            </button>
-        </div>
-    </div>
-
-    <!-- 4c: Unsupported type fallback -->
+    <!-- 4b: Unsupported type fallback -->
     <div id="other-viewer" class="hidden w-full max-w-md glass-panel rounded-2xl p-6 flex flex-col items-center gap-4">
         <p class="text-gray-300 text-sm text-center">Ye file type seedha preview nahi ho sakti.</p>
         <a id="other-download" href="#" target="_blank"
@@ -136,7 +76,7 @@
     </div>
 </div>
 
-<p class="text-gray-600 text-[11px] mt-auto mb-3 tracking-wider">POWERED BY NEXA ENGINE · SECURE</p>
+<p class="text-gray-600 text-xs mt-auto mb-4">POWERED BY NEXA ENGINE · SECURE</p>
 
 <!-- ============================================================
      PART 5: LOGIC
@@ -146,14 +86,11 @@
     tg.expand();
     tg.ready();
 
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
     const params = new URLSearchParams(window.location.search);
     const streamUrl = params.get('stream');
     const rawType   = (params.get('type') || '').toLowerCase();
     const fileName  = params.get('name') || 'File';
 
-    // Smart auto-detect: agar type me pdf na bhi likha ho par filename .pdf ho toh bhi PDF khole
     const isPdf = rawType === 'pdf' || fileName.toLowerCase().endsWith('.pdf') || (streamUrl && streamUrl.toLowerCase().includes('.pdf'));
     const isVideo = rawType === 'video' || /\.(mp4|mkv|webm|mov)$/i.test(fileName);
 
@@ -175,222 +112,46 @@
         showStep(stepError);
     }
 
-    // ---- PART 3: Ad Timer ----
+    // ---- PART 3: MONETAG REWARDED INTERSTITIAL (show_11850665) ----
     function playAd(onDone) {
         showStep(stepLoading);
-        let seconds = 10;
-        loadingText.textContent = `Watching ad... ${seconds}s`;
-        const timer = setInterval(() => {
-            seconds -= 1;
-            if (seconds <= 0) {
-                clearInterval(timer);
+        loadingText.textContent = "Loading ad...";
+
+        if (typeof show_11850665 === 'function') {
+            show_11850665().then(() => {
+                // User watched the ad -> Open Player
                 onDone();
-            } else {
-                loadingText.textContent = `Watching ad... ${seconds}s`;
-            }
-        }, 1000);
+            }).catch((err) => {
+                console.warn("Ad skipped or failed to load, opening player:", err);
+                onDone();
+            });
+        } else {
+            // Backup 5s timer agar user ke phone me ad script block ho
+            let seconds = 5;
+            loadingText.textContent = `Opening player in ${seconds}s...`;
+            const timer = setInterval(() => {
+                seconds -= 1;
+                if (seconds <= 0) {
+                    clearInterval(timer);
+                    onDone();
+                } else {
+                    loadingText.textContent = `Opening player in ${seconds}s...`;
+                }
+            }, 1000);
+        }
     }
 
-    // ---- PART 4: Player & Dual-Engine PDF Viewer ----
     let plyrInstance = null;
-    let pdfDoc = null;
-    let pdfMode = 'infinity'; // 'infinity' | 'page'
-    let usingFallbackIframe = false;
-    let currentPage = 1;
-    let totalPages = 1;
-    let renderedPages = new Set();
-
-    const pdfWrapper = document.getElementById('pdf-wrapper');
-    const pdfContainer = document.getElementById('pdf-scroll-container');
-    const pdfIframeWrapper = document.getElementById('pdf-iframe-wrapper');
-    const pdfCloudIframe = document.getElementById('pdf-cloud-iframe');
-    const pdfLoader = document.getElementById('pdf-loader');
-    const pdfLoaderText = document.getElementById('pdf-loader-text');
-    const pdfModeBtn = document.getElementById('pdf-mode-btn');
-    const pdfModeIcon = document.getElementById('pdf-mode-icon');
-    const pdfModeLabel = document.getElementById('pdf-mode-label');
-    const pdfPageIndicator = document.getElementById('pdf-page-indicator');
-    const pdfPageControls = document.getElementById('pdf-page-controls');
-    const prevPageBtn = document.getElementById('prev-page-btn');
-    const nextPageBtn = document.getElementById('next-page-btn');
-
-    async function initPdfViewer(url) {
-        pdfWrapper.classList.remove('hidden');
-        pdfLoader.classList.remove('hidden');
-
-        // Try direct PDF.js first; if blocked by CORS, switch to CORS-free Cloud Viewer
-        try {
-            const loadingTask = pdfjsLib.getDocument({ url: url, withCredentials: false });
-            loadingTask.onProgress = (p) => {
-                if (p.total > 0) {
-                    pdfLoaderText.textContent = `Loading PDF... ${Math.round((p.loaded / p.total) * 100)}%`;
-                }
-            };
-
-            pdfDoc = await loadingTask.promise;
-            usingFallbackIframe = false;
-            totalPages = pdfDoc.numPages;
-            currentPage = 1;
-            renderedPages.clear();
-            pdfContainer.innerHTML = '';
-
-            for (let i = 1; i <= totalPages; i++) {
-                const canvas = document.createElement('canvas');
-                canvas.id = `pdf-page-${i}`;
-                canvas.dataset.pageNumber = i;
-                canvas.className = 'pdf-page-canvas';
-                pdfContainer.appendChild(canvas);
-            }
-
-            pdfLoader.classList.add('hidden');
-            applyPdfMode();
-            setupLazyRenderObserver();
-        } catch (corsOrFetchError) {
-            console.warn('Direct fetch blocked by CORS, switching to CORS-free Cloud Viewer:', corsOrFetchError);
-            loadCorsFreeFallback(url);
-        }
-    }
-
-    // Engine 2: CORS-Free Cloud Renderer (Works on Android Telegram WebView without CORS headers)
-    function loadCorsFreeFallback(url) {
-        usingFallbackIframe = true;
-        pdfContainer.classList.add('hidden');
-        pdfIframeWrapper.classList.remove('hidden');
-        pdfLoaderText.textContent = 'Opening PDF reader...';
-
-        // Google Docs Embedded Viewer renders PDFs inside Android WebView without CORS issues
-        const gviewUrl = `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(url)}`;
-        pdfCloudIframe.src = gviewUrl;
-
-        pdfCloudIframe.onload = () => {
-            pdfLoader.classList.add('hidden');
-        };
-        // Safety timeout in case onload takes long
-        setTimeout(() => pdfLoader.classList.add('hidden'), 3500);
-        applyFallbackMode();
-    }
-
-    function applyFallbackMode() {
-        const vh = pdfIframeWrapper.clientHeight || 500;
-        if (pdfMode === 'infinity') {
-            pdfModeIcon.textContent = '∞';
-            pdfModeLabel.textContent = 'Infinity';
-            pdfPageIndicator.textContent = 'Scroll';
-            pdfPageControls.classList.add('hidden');
-            pdfCloudIframe.style.pointerEvents = 'auto';
-            pdfCloudIframe.style.transform = `translateY(0px)`;
-            pdfCloudIframe.style.height = '100%';
-        } else {
-            pdfModeIcon.textContent = '📄';
-            pdfModeLabel.textContent = 'Page Mode';
-            pdfPageIndicator.textContent = `Page ${currentPage}`;
-            pdfPageControls.classList.remove('hidden');
-            prevPageBtn.disabled = currentPage <= 1;
-            nextPageBtn.disabled = false;
-            // Step-by-step vertical viewport paging
-            pdfCloudIframe.style.height = `${vh * 25}px`;
-            pdfCloudIframe.style.transform = `translateY(-${(currentPage - 1) * (vh - 60)}px)`;
-            pdfCloudIframe.style.transition = 'transform 0.25s ease-out';
-        }
-    }
-
-    async function renderPage(pageNum) {
-        if (renderedPages.has(pageNum) || !pdfDoc) return;
-        renderedPages.add(pageNum);
-
-        const page = await pdfDoc.getPage(pageNum);
-        const canvas = document.getElementById(`pdf-page-${pageNum}`);
-        if (!canvas) return;
-
-        const ctx = canvas.getContext('2d');
-        const dpr = window.devicePixelRatio || 1;
-        const containerWidth = pdfContainer.clientWidth - 24;
-        const unscaledViewport = page.getViewport({ scale: 1 });
-        const scale = (containerWidth / unscaledViewport.width) * dpr;
-        const viewport = page.getViewport({ scale });
-
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-
-        await page.render({ canvasContext: ctx, viewport }).promise;
-    }
-
-    function setupLazyRenderObserver() {
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const pageNum = parseInt(entry.target.dataset.pageNumber, 10);
-                    renderPage(pageNum);
-                    if (pdfMode === 'infinity') {
-                        currentPage = pageNum;
-                        updatePageIndicator();
-                    }
-                }
-            });
-        }, { root: pdfContainer, rootMargin: '300px 0px' });
-
-        document.querySelectorAll('.pdf-page-canvas').forEach(c => observer.observe(c));
-    }
-
-    function applyPdfMode() {
-        if (usingFallbackIframe) return applyFallbackMode();
-
-        const canvases = document.querySelectorAll('.pdf-page-canvas');
-
-        if (pdfMode === 'infinity') {
-            pdfModeIcon.textContent = '∞';
-            pdfModeLabel.textContent = 'Infinity';
-            pdfPageControls.classList.add('hidden');
-            pdfContainer.classList.add('overflow-y-auto');
-            pdfContainer.classList.remove('overflow-hidden', 'justify-center');
-
-            canvases.forEach(c => c.classList.remove('hidden'));
-            const target = document.getElementById(`pdf-page-${currentPage}`);
-            if (target) target.scrollIntoView({ block: 'start' });
-        } else {
-            pdfModeIcon.textContent = '📄';
-            pdfModeLabel.textContent = 'Page Mode';
-            pdfPageControls.classList.remove('hidden');
-            pdfContainer.scrollTop = 0;
-
-            canvases.forEach((c, idx) => {
-                if (idx + 1 === currentPage) c.classList.remove('hidden');
-                else c.classList.add('hidden');
-            });
-            renderPage(currentPage);
-            if (currentPage + 1 <= totalPages) renderPage(currentPage + 1);
-        }
-        updatePageIndicator();
-    }
-
-    function updatePageIndicator() {
-        pdfPageIndicator.textContent = `${currentPage} / ${totalPages}`;
-        prevPageBtn.disabled = currentPage <= 1;
-        nextPageBtn.disabled = currentPage >= totalPages;
-    }
-
-    // Toggle Infinity / Page Mode
-    pdfModeBtn.addEventListener('click', () => {
-        pdfMode = pdfMode === 'infinity' ? 'page' : 'infinity';
-        applyPdfMode();
-    });
-
-    // Prev / Next Page Buttons
-    prevPageBtn.addEventListener('click', () => {
-        if (currentPage > 1) {
-            currentPage--;
-            applyPdfMode();
-        }
-    });
-    nextPageBtn.addEventListener('click', () => {
-        if (usingFallbackIframe || currentPage < totalPages) {
-            currentPage++;
-            applyPdfMode();
-        }
-    });
 
     function openPlayer() {
         if (!streamUrl) return showError("Invalid link: file not specified.");
+
+        if (isPdf) {
+            // Seedha pdf.html khol dega
+            window.location.href = `pdf.html?stream=${encodeURIComponent(streamUrl)}&name=${encodeURIComponent(fileName)}`;
+            return;
+        }
+
         showStep(stepPlayer);
 
         if (isVideo) {
@@ -408,8 +169,6 @@
                 });
             }
             v.play().catch(() => {});
-        } else if (isPdf) {
-            initPdfViewer(streamUrl);
         } else {
             document.getElementById('other-viewer').classList.remove('hidden');
             document.getElementById('other-download').href = streamUrl;
