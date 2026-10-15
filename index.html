@@ -24,6 +24,28 @@
         --plyr-color-main: #f97316;
         --plyr-video-control-background-hover: #ea580c;
     }
+    /* PDF Preload Layer: Pehle peeche chhupa rahega, Ad ke baad 0.1s me samne aayega */
+    .pdf-preload-hidden {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100vh;
+        opacity: 0;
+        pointer-events: none;
+        z-index: -10;
+        border: 0;
+    }
+    .pdf-preload-active {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100vh;
+        opacity: 1;
+        pointer-events: auto;
+        z-index: 9999;
+        border: 0;
+        background: #120a08;
+    }
 </style>
 </head>
 <body class="flex flex-col items-center min-h-screen select-none">
@@ -47,7 +69,7 @@
         class="bg-orange-500 hover:bg-red-600 text-white font-semibold py-3 px-8 rounded-xl transition-all shadow-[0_0_15px_rgba(249,115,22,0.6)] w-full">
         ▶ Watch Ad & Open Player
     </button>
-    <p class="text-gray-500 text-xs text-center">Short ad dekhne ke baad player khul jaayega.</p>
+    <p id="preload-status" class="text-gray-400 text-xs text-center">Short ad dekhne ke baad player khul jaayega.</p>
 </div>
 
 <div id="step-loading" class="hidden w-full max-w-md glass-panel rounded-2xl p-6 flex flex-col items-center gap-3 mx-4">
@@ -61,7 +83,7 @@
 </div>
 
 <!-- ============================================================
-     PART 4: PLAYER (Video & Fallback)
+     PART 4: PLAYER (Video, Preloaded PDF & Fallback)
      ============================================================ -->
 <div id="step-player" class="hidden w-full flex-1 flex flex-col items-center px-3 pb-6">
 
@@ -75,6 +97,9 @@
            class="bg-orange-500 text-white font-semibold py-2 px-6 rounded-xl">⬇ Download</a>
     </div>
 </div>
+
+<!-- 4c: BACKGROUND PRELOAD CONTAINER FOR PDF (Page khulte hi peeche load hona shuru ho jayega) -->
+<iframe id="pdf-preloader" class="pdf-preload-hidden" allowfullscreen></iframe>
 
 <p class="text-gray-600 text-xs mt-auto mb-4">POWERED BY NEXA ENGINE · SECURE</p>
 
@@ -102,6 +127,27 @@
     const stepPlayer = document.getElementById('step-player');
     const loadingText = document.getElementById('loading-text');
     const errorText = document.getElementById('error-text');
+    const preloadStatus = document.getElementById('preload-status');
+    const pdfPreloader = document.getElementById('pdf-preloader');
+    const videoEl = document.getElementById('video-player');
+
+    // =====================================================
+    // SMART BACKGROUND PRE-LOADER (Ad se pehle hi PDF/Video तैयार रखेगा)
+    // =====================================================
+    if (streamUrl) {
+        if (isPdf) {
+            preloadStatus.textContent = "⚡ Pre-loading PDF in background...";
+            pdfPreloader.src = `pdf.html?stream=${encodeURIComponent(streamUrl)}&name=${encodeURIComponent(fileName)}`;
+            pdfPreloader.onload = () => {
+                preloadStatus.textContent = "✅ PDF Ready! Watch short ad to open.";
+                preloadStatus.classList.replace('text-gray-400', 'text-green-400');
+            };
+        } else if (isVideo) {
+            // Video metadata bhi background me ready rakho
+            videoEl.src = streamUrl;
+            videoEl.load();
+        }
+    }
 
     function showStep(step) {
         [stepWatch, stepLoading, stepError, stepPlayer].forEach(el => el.classList.add('hidden'));
@@ -112,21 +158,19 @@
         showStep(stepError);
     }
 
-    // ---- PART 3: MONETAG REWARDED INTERSTITIAL (show_11850665) ----
+    // ---- PART 3: ONLY MONETAG AD (show_11850665) ----
     function playAd(onDone) {
         showStep(stepLoading);
-        loadingText.textContent = "Loading ad...";
+        loadingText.textContent = "Loading Monetag Ad...";
 
         if (typeof show_11850665 === 'function') {
             show_11850665().then(() => {
-                // User watched the ad -> Open Player
                 onDone();
             }).catch((err) => {
-                console.warn("Ad skipped or failed to load, opening player:", err);
+                console.warn("Monetag skipped/failed, opening player:", err);
                 onDone();
             });
         } else {
-            // Backup 5s timer agar user ke phone me ad script block ho
             let seconds = 5;
             loadingText.textContent = `Opening player in ${seconds}s...`;
             const timer = setInterval(() => {
@@ -147,20 +191,20 @@
         if (!streamUrl) return showError("Invalid link: file not specified.");
 
         if (isPdf) {
-            // Seedha pdf.html khol dega
-            window.location.href = `pdf.html?stream=${encodeURIComponent(streamUrl)}&name=${encodeURIComponent(fileName)}`;
+            // Kyunki PDF peeche load ho chuki hai, bas 0.1s me samne le aao!
+            pdfPreloader.classList.remove('pdf-preload-hidden');
+            pdfPreloader.classList.add('pdf-preload-active');
             return;
         }
 
         showStep(stepPlayer);
 
         if (isVideo) {
-            const v = document.getElementById('video-player');
-            v.classList.remove('hidden');
-            v.src = streamUrl;
+            videoEl.classList.remove('hidden');
+            if (!videoEl.src) videoEl.src = streamUrl;
 
             if (!plyrInstance) {
-                plyrInstance = new Plyr(v, {
+                plyrInstance = new Plyr(videoEl, {
                     controls: [
                         'play-large', 'play', 'progress', 'current-time',
                         'mute', 'volume', 'settings', 'fullscreen'
@@ -168,7 +212,7 @@
                     settings: ['speed'],
                 });
             }
-            v.play().catch(() => {});
+            videoEl.play().catch(() => {});
         } else {
             document.getElementById('other-viewer').classList.remove('hidden');
             document.getElementById('other-download').href = streamUrl;
