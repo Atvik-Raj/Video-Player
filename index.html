@@ -20,14 +20,15 @@
 <style>
     html, body { background-color: #120a08; color: #fff; height: 100%; margin: 0; }
     .glass-panel { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); }
+    /* Plyr ko orange-red neon theme me rangna */
     :root {
         --plyr-color-main: #f97316;
         --plyr-video-control-background-hover: #ea580c;
     }
-    .plyr { width: 100%; max-width: 42rem; border-radius: 0.75rem; overflow: hidden; }
+    #pdf-viewer { width: 100%; height: 75vh; border: 0; }
 </style>
 </head>
-<body class="flex flex-col items-center min-h-screen select-none">
+<body class="flex flex-col items-center min-h-screen">
 
 <!-- ============================================================
      PART 2: HEADER
@@ -41,14 +42,14 @@
 </div>
 
 <!-- ============================================================
-     PART 3: AD GATE
+     PART 3: AD GATE (player khulne se pehle)
      ============================================================ -->
 <div id="step-watch" class="w-full max-w-md glass-panel rounded-2xl p-6 flex flex-col items-center gap-4 mx-4">
     <button id="watch-btn"
         class="bg-orange-500 hover:bg-red-600 text-white font-semibold py-3 px-8 rounded-xl transition-all shadow-[0_0_15px_rgba(249,115,22,0.6)] w-full">
         ▶ Watch Ad & Open Player
     </button>
-    <p class="text-gray-400 text-xs text-center">Short ad dekhne ke baad player khul jaayega.</p>
+    <p class="text-gray-500 text-xs text-center">Short ad dekhne ke baad player khul jaayega.</p>
 </div>
 
 <div id="step-loading" class="hidden w-full max-w-md glass-panel rounded-2xl p-6 flex flex-col items-center gap-3 mx-4">
@@ -62,28 +63,17 @@
 </div>
 
 <!-- ============================================================
-     PART 4: PLAYER (Video & Fallback)
+     PART 4: PLAYER (ad ke baad yahi dikhta hai)
      ============================================================ -->
 <div id="step-player" class="hidden w-full flex-1 flex flex-col items-center px-3 pb-6">
 
-    <!-- 4a: Video Container -->
-    <div id="video-container" class="hidden w-full max-w-2xl flex flex-col items-center gap-3">
-        <video id="video-player" class="w-full rounded-xl" controls playsinline></video>
+    <!-- 4a: Video player (100% AAPKA ORIGINAL CODE) -->
+    <video id="video-player" class="hidden w-full max-w-2xl rounded-xl" controls playsinline></video>
 
-        <!-- Helpful Controls if Video takes time on Koyeb -->
-        <div class="flex items-center gap-2 w-full justify-center mt-1">
-            <button id="reload-video-btn"
-                class="glass-panel hover:bg-orange-500/20 text-xs text-orange-400 font-semibold py-2 px-4 rounded-xl">
-                ↻ Reload Stream
-            </button>
-            <a id="direct-open-btn" href="#" target="_blank"
-               class="glass-panel hover:bg-orange-500/20 text-xs text-gray-300 font-semibold py-2 px-4 rounded-xl">
-                ⬇ Direct Play / Download
-            </a>
-        </div>
-    </div>
+    <!-- 4b: PDF viewer -->
+    <iframe id="pdf-viewer" class="hidden w-full max-w-2xl glass-panel rounded-xl"></iframe>
 
-    <!-- 4b: Unsupported type fallback -->
+    <!-- 4c: Unsupported type fallback -->
     <div id="other-viewer" class="hidden w-full max-w-md glass-panel rounded-2xl p-6 flex flex-col items-center gap-4">
         <p class="text-gray-300 text-sm text-center">Ye file type seedha preview nahi ho sakti.</p>
         <a id="other-download" href="#" target="_blank"
@@ -94,21 +84,18 @@
 <p class="text-gray-600 text-xs mt-auto mb-4">POWERED BY NEXA ENGINE · SECURE</p>
 
 <!-- ============================================================
-     PART 5: LOGIC
+     PART 5: LOGIC (100% AAPKA ORIGINAL LOGIC)
      ============================================================ -->
 <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
     tg.ready();
 
+    // ---- URL params (bot isi tarah bhejta hai) ----
     const params = new URLSearchParams(window.location.search);
-    const streamUrl = params.get('stream');
-    const rawType   = (params.get('type') || '').toLowerCase();
+    const streamUrl = params.get('stream');   // existing /watch/... link (bot se aata hai)
+    const mediaType = params.get('type');     // "video" | "pdf" | "other"
     const fileName  = params.get('name') || 'File';
-
-    const isPdf = rawType === 'pdf' || fileName.toLowerCase().endsWith('.pdf') || (streamUrl && streamUrl.toLowerCase().includes('.pdf'));
-    // Default to video if type is video OR if bot sent generic "file" without pdf type
-    const isVideo = !isPdf && (rawType === 'video' || rawType === '' || /\.(mp4|mkv|webm|mov|avi)$/i.test(fileName) || fileName === 'file');
 
     document.getElementById('file-name').textContent = fileName;
 
@@ -118,8 +105,6 @@
     const stepPlayer = document.getElementById('step-player');
     const loadingText = document.getElementById('loading-text');
     const errorText = document.getElementById('error-text');
-    const videoContainer = document.getElementById('video-container');
-    const videoEl = document.getElementById('video-player');
 
     function showStep(step) {
         [stepWatch, stepLoading, stepError, stepPlayer].forEach(el => el.classList.add('hidden'));
@@ -130,83 +115,64 @@
         showStep(stepError);
     }
 
-    // ---- PART 3: MONETAG AD (show_11850665) ----
+    // ---- PART 3: Ad (Monetag 11850665 + Original Timer Fallback) ----
     function playAd(onDone) {
         showStep(stepLoading);
-        loadingText.textContent = "Loading ad...";
-
         if (typeof show_11850665 === 'function') {
+            loadingText.textContent = "Loading ad...";
             show_11850665().then(() => {
                 onDone();
-            }).catch((err) => {
-                console.warn("Monetag skipped/failed, opening player:", err);
+            }).catch(() => {
                 onDone();
             });
         } else {
-            let seconds = 5;
-            loadingText.textContent = `Opening player in ${seconds}s...`;
+            let seconds = 10;
+            loadingText.textContent = `Watching ad... ${seconds}s`;
             const timer = setInterval(() => {
                 seconds -= 1;
                 if (seconds <= 0) {
                     clearInterval(timer);
                     onDone();
                 } else {
-                    loadingText.textContent = `Opening player in ${seconds}s...`;
+                    loadingText.textContent = `Watching ad... ${seconds}s`;
                 }
             }, 1000);
         }
     }
 
+    // ---- PART 4: Player (EXACT AAPKA ORIGINAL CODE) ----
     let plyrInstance = null;
-
-    function startVideoStream() {
-        videoContainer.classList.remove('hidden');
-        document.getElementById('direct-open-btn').href = streamUrl;
-
-        // 1. Setup Plyr FIRST before setting video src (Fixes 00:00 Black Screen bug!)
-        if (!plyrInstance) {
-            plyrInstance = new Plyr(videoEl, {
-                controls: [
-                    'play-large', 'play', 'progress', 'current-time',
-                    'mute', 'volume', 'settings', 'fullscreen'
-                ],
-                settings: ['speed'],
-            });
-        }
-
-        // 2. Now set stream URL and load fresh connection
-        videoEl.src = streamUrl;
-        videoEl.load();
-        videoEl.play().catch(() => {});
-    }
-
-    // Reload button if Koyeb stream takes time to wake up
-    document.getElementById('reload-video-btn').addEventListener('click', () => {
-        const cur = videoEl.currentTime || 0;
-        videoEl.src = streamUrl + (streamUrl.includes('?') ? '&' : '?') + 't=' + Date.now();
-        videoEl.load();
-        videoEl.currentTime = cur;
-        videoEl.play().catch(() => {});
-    });
 
     function openPlayer() {
         if (!streamUrl) return showError("Invalid link: file not specified.");
-
-        if (isPdf) {
-            window.location.href = `pdf.html?stream=${encodeURIComponent(streamUrl)}&name=${encodeURIComponent(fileName)}`;
-            return;
-        }
-
         showStep(stepPlayer);
 
-        if (isVideo) {
-            startVideoStream();
+        if (mediaType === 'video') {
+            const v = document.getElementById('video-player');
+            v.classList.remove('hidden');
+            v.src = streamUrl;
+
+            // Plyr sirf ek baar setup karo (dobara openPlayer() chale to purana instance reuse ho)
+            if (!plyrInstance) {
+                plyrInstance = new Plyr(v, {
+                    controls: [
+                        'play-large', 'play', 'progress', 'current-time',
+                        'mute', 'volume', 'settings', 'fullscreen'
+                    ],
+                    settings: ['speed'],
+                });
+            }
+            v.play().catch(() => {}); // autoplay blocked ho to user khud play dabayega
+        } else if (mediaType === 'pdf') {
+            // Sirf PDF ke liye pdf.html khulega
+            window.location.href = `pdf.html?stream=${encodeURIComponent(streamUrl)}&name=${encodeURIComponent(fileName)}`;
         } else {
             document.getElementById('other-viewer').classList.remove('hidden');
             document.getElementById('other-download').href = streamUrl;
         }
     }
 
+    // ---- Wire up buttons ----
     document.getElementById('watch-btn').addEventListener('click', () => {
         if (!streamUrl) return showError("Invalid link: file not specified.");
         playAd(openPlayer);
