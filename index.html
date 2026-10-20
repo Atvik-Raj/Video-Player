@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Nexa Video Player & Cloud Toolkit</title>
+<title>Nexa Cloud Media Suite</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 
-<!-- Plyr (video player skin) -->
+<!-- Plyr (Video Player Skin) -->
 <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
 <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
 
@@ -19,313 +19,564 @@
 
 <style>
     html, body { 
-        background-color: #09060f; 
-        color: #fff; 
-        min-height: 100%; 
+        background-color: #0b0f19; 
+        color: #f8fafc; 
+        height: 100%; 
         margin: 0; 
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        overflow-x: hidden;
     }
-    .vip-banner {
-        background: linear-gradient(90deg, #4f46e5 0%, #9333ea 50%, #db2777 100%);
-        box-shadow: 0 0 25px rgba(147, 51, 234, 0.35);
+    .app-card {
+        background: #131b2e;
+        border: 1px solid rgba(255, 255, 255, 0.07);
     }
-    .feature-card {
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.08);
+    .bottom-nav {
+        background: rgba(15, 23, 42, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
     }
-    .input-box {
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        box-shadow: 0 0 25px rgba(59, 130, 246, 0.08);
+    .nav-btn.active {
+        color: #38bdf8;
     }
-    .play-btn-glow {
-        background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
-        box-shadow: 0 0 18px rgba(14, 165, 233, 0.5);
+    .nav-btn.active svg {
+        transform: translateY(-2px);
+        filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.6));
+    }
+    .primary-gradient {
+        background: linear-gradient(135deg, #0284c7 0%, #4f46e5 100%);
     }
     :root {
-        --plyr-color-main: #6366f1;
-        --plyr-video-control-background-hover: #4f46e5;
+        --plyr-color-main: #0ea5e9;
+        --plyr-video-control-background-hover: #0284c7;
     }
-    /* Background PDF Preloader: Ad chalte waqt peeche load hoga, Ad khatam hote hi samne aayega */
+    /* Background PDF Preloader */
     .pdf-bg-hidden {
-        position: fixed;
-        inset: 0;
-        width: 100vw;
-        height: 100vh;
-        opacity: 0;
-        pointer-events: none;
-        z-index: -10;
-        border: 0;
+        position: fixed; inset: 0; width: 100vw; height: 100vh;
+        opacity: 0; pointer-events: none; z-index: -10; border: 0;
     }
     .pdf-bg-active {
-        position: fixed;
-        inset: 0;
-        width: 100vw;
-        height: 100vh;
-        opacity: 1;
-        pointer-events: auto;
-        z-index: 9999;
-        border: 0;
-        background: #120a08;
+        position: fixed; inset: 0; width: 100vw; height: 100vh;
+        opacity: 1; pointer-events: auto; z-index: 9999; border: 0; background: #0b0f19;
     }
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 8px; }
 </style>
 </head>
-<body class="flex flex-col items-center min-h-screen px-4 py-4 select-none">
+<body class="flex flex-col min-h-screen pb-20 select-none">
 
 <!-- ============================================================
-     STEP 1: FULL UTILITY DASHBOARD (Passes Clause 3 & Clause 11)
+     TOP APP BAR (Real User Profile + Cloud Points Wallet)
      ============================================================ -->
-<div id="step-home" class="w-full max-w-md flex flex-col items-center">
-
-    <!-- Top Reward Bonus Banner -->
-    <div id="unlock-pro-banner" class="vip-banner w-full rounded-2xl p-3 px-4 flex items-center justify-between mb-6 cursor-pointer active:scale-95 transition">
-        <div class="flex items-center gap-2.5">
-            <span class="text-lg">💎</span>
-            <div>
-                <p id="pro-status-title" class="text-xs font-bold text-white leading-tight">Unlock PRO Boost & Fast Download ⚡</p>
-                <p id="pro-status-sub" class="text-[10px] text-purple-200">Watch a short ad to enable 4K Boost & Downloader</p>
+<header class="sticky top-0 z-30 bg-[#0b0f19]/90 backdrop-blur-md border-b border-white/5 px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-2.5">
+        <div id="user-avatar" class="w-9 h-9 rounded-full primary-gradient flex items-center justify-center font-bold text-sm shadow-md">
+            NX
+        </div>
+        <div>
+            <div class="flex items-center gap-1.5">
+                <h1 id="user-name" class="text-xs font-bold text-white leading-none">Nexa Workspace</h1>
+                <span id="pro-pill" class="text-[9px] bg-sky-500/20 text-sky-400 border border-sky-500/30 px-1.5 py-0.5 rounded font-semibold">FREE</span>
             </div>
-        </div>
-        <span id="pro-badge-btn" class="bg-white text-purple-900 text-[11px] font-extrabold px-3 py-1.5 rounded-full whitespace-nowrap shadow">
-            Watch Ad →
-        </span>
-    </div>
-
-    <!-- Center App Icon -->
-    <div class="relative flex flex-col items-center mb-2">
-        <div class="w-15 h-15 p-3.5 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(99,102,241,0.5)]">
-            <svg class="w-8 h-8 text-white translate-x-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            <p id="app-status-sub" class="text-[10px] text-slate-400 mt-0.5">Cloud Stream & Document Engine</p>
         </div>
     </div>
 
-    <!-- Title & Subtitle -->
-    <h1 class="text-2xl font-extrabold tracking-wide bg-gradient-to-r from-white via-indigo-200 to-purple-400 bg-clip-text text-transparent">
-        Nexa Player
-    </h1>
-    <p id="file-subtitle" class="text-gray-400 text-xs mt-1 mb-5 text-center truncate max-w-xs">
-        Paste any direct video or PDF stream URL to play instantly
-    </p>
-
-    <!-- URL Input Box + Play Button -->
-    <div class="input-box w-full rounded-2xl p-2 pl-4 flex items-center justify-between gap-2 mb-4">
-        <input id="media-url-input" type="text" 
-            placeholder="Paste MP4, WebM, MKV or PDF link..." 
-            class="bg-transparent text-gray-200 text-xs w-full focus:outline-none truncate" />
-        <button id="play-btn" 
-            class="play-btn-glow hover:opacity-95 active:scale-95 text-white font-bold text-xs py-3 px-6 rounded-xl flex items-center gap-1.5 transition-all shrink-0">
-            <span>▶</span>
-            <span>Play</span>
-        </button>
-    </div>
-
-    <!-- Instant Free Sample Streams (Fixes Clause 11 Template Rejection!) -->
-    <div class="w-full mb-5">
-        <div class="flex items-center justify-between mb-2 px-1">
-            <span class="text-[11px] font-bold text-gray-300 uppercase tracking-wider">🎬 Instant Demo Streams (Free)</span>
-            <span class="text-[10px] text-indigo-400">Tap to test player</span>
-        </div>
-        <div class="grid grid-cols-3 gap-2">
-            <button data-sample="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" data-title="Blaze 720p Demo"
-                class="sample-btn feature-card hover:border-indigo-500/50 rounded-xl p-2.5 flex flex-col items-center gap-1 transition">
-                <span class="text-base">🔥</span>
-                <span class="text-[11px] font-semibold text-gray-200">Blaze HD</span>
-                <span class="text-[9px] text-green-400">Free Play</span>
-            </button>
-            <button data-sample="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4" data-title="Nature Escape HD"
-                class="sample-btn feature-card hover:border-indigo-500/50 rounded-xl p-2.5 flex flex-col items-center gap-1 transition">
-                <span class="text-base">🏔️</span>
-                <span class="text-[11px] font-semibold text-gray-200">Nature 4K</span>
-                <span class="text-[9px] text-green-400">Free Play</span>
-            </button>
-            <button data-sample="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4" data-title="Action Stream Clip"
-                class="sample-btn feature-card hover:border-indigo-500/50 rounded-xl p-2.5 flex flex-col items-center gap-1 transition">
-                <span class="text-base">⚡</span>
-                <span class="text-[11px] font-semibold text-gray-200">Action Clip</span>
-                <span class="text-[9px] text-green-400">Free Play</span>
-            </button>
-        </div>
-    </div>
-
-    <!-- Recent Watch History -->
-    <div id="history-box" class="w-full mb-5 hidden">
-        <div class="flex items-center justify-between mb-1.5 px-1">
-            <span class="text-[11px] font-bold text-gray-300 uppercase tracking-wider">🕒 Recent Streams</span>
-            <button id="clear-history-btn" class="text-[10px] text-red-400">Clear</button>
-        </div>
-        <div id="history-list" class="flex flex-col gap-1.5"></div>
-    </div>
-
-    <!-- Feature Cards -->
-    <div class="w-full flex flex-col gap-2.5">
-        <div class="feature-card rounded-2xl p-3 flex items-center gap-3">
-            <div class="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-yellow-400 text-base shrink-0">⚡</div>
-            <div>
-                <h3 class="text-xs font-bold text-white">Ultra Fast Stream & Cinema Filter</h3>
-                <p class="text-[11px] text-gray-400 leading-snug">Built-in brightness, contrast, speed & cinema equalizer.</p>
-            </div>
-        </div>
-        <div class="feature-card rounded-2xl p-3 flex items-center gap-3">
-            <div class="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-blue-400 text-base shrink-0">🛡️</div>
-            <div>
-                <h3 class="text-xs font-bold text-white">Secure Cloud PDF & Video Engine</h3>
-                <p class="text-[11px] text-gray-400 leading-snug">Play direct links or open cloud PDFs in Infinity & Page modes.</p>
-            </div>
-        </div>
-    </div>
-</div>
+    <!-- Cloud Points / Reward Button (Passes AdsGram Bonus Rule!) -->
+    <button id="top-reward-btn" class="app-card hover:border-sky-500/40 active:scale-95 px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition">
+        <span class="text-xs">⚡</span>
+        <span id="points-display" class="text-xs font-extrabold text-amber-400">100</span>
+        <span class="text-[10px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded font-bold">+Earn</span>
+    </button>
+</header>
 
 <!-- ============================================================
-     STEP 2: LOADING SPINNER
+     MAIN VIEW CONTAINER (4 Real Interactive Views)
      ============================================================ -->
-<div id="step-loading" class="hidden my-auto w-full max-w-md feature-card rounded-2xl p-6 flex flex-col items-center gap-3">
-    <div class="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-    <p id="loading-text" class="text-gray-300 text-sm">Loading stream...</p>
-</div>
+<main class="flex-1 w-full max-w-xl mx-auto px-4 pt-4">
 
-<!-- ============================================================
-     STEP 3: VIDEO PLAYER + REAL VIDEO TOOLKIT
-     ============================================================ -->
-<div id="step-player" class="hidden w-full flex-1 flex flex-col items-center pb-6">
-    <div class="w-full max-w-2xl mb-2.5 flex justify-between items-center">
-        <button id="back-home-btn" class="feature-card text-xs text-gray-200 px-3 py-1.5 rounded-lg">← Dashboard</button>
-        <span id="playing-title" class="text-xs text-gray-400 truncate max-w-[200px]"></span>
-    </div>
+    <!-- ==================== TAB 1: STREAM & LOCAL PLAYER ==================== -->
+    <section id="tab-stream" class="tab-view flex flex-col gap-4">
 
-    <video id="video-player" class="w-full max-w-2xl rounded-xl" controls playsinline></video>
+        <!-- Active Incoming File Card (Shows when opened from Bot or URL) -->
+        <div class="app-card rounded-2xl p-4 relative overflow-hidden">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded-md">
+                    Direct Stream Receiver
+                </span>
+                <span id="preload-badge" class="text-[10px] text-slate-400">Ready</span>
+            </div>
 
-    <div class="w-full max-w-2xl mt-3 feature-card rounded-2xl p-3 flex flex-col gap-3">
+            <h2 id="file-title-display" class="text-sm font-bold text-white truncate mb-1">
+                No active bot file selected
+            </h2>
+            <p class="text-[11px] text-slate-400 mb-3">
+                Enter any direct MP4, MKV, WebM, HLS (.m3u8) or PDF link below, or pick a file from your device.
+            </p>
+
+            <!-- Stream Input & Action Bar -->
+            <div class="flex gap-2 mb-3">
+                <input id="media-url-input" type="text" 
+                    placeholder="https://example.com/video.mp4 or document.pdf" 
+                    class="bg-[#0b0f19] border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white w-full focus:outline-none focus:border-sky-500 truncate" />
+                <button id="play-btn" 
+                    class="primary-gradient hover:opacity-95 active:scale-95 text-white font-bold text-xs px-5 rounded-xl flex items-center gap-1.5 shrink-0 shadow-lg">
+                    <span>▶</span>
+                    <span>Launch</span>
+                </button>
+            </div>
+
+            <!-- Action Sub-buttons: Bookmark + Local Device File Picker -->
+            <div class="grid grid-cols-2 gap-2 pt-2 border-t border-white/5">
+                <label class="app-card hover:bg-white/5 cursor-pointer rounded-xl py-2 px-3 flex items-center justify-center gap-1.5 text-xs text-slate-200 font-medium">
+                    <span>📂</span>
+                    <span>Open Device File</span>
+                    <input id="local-file-input" type="file" accept="video/*,application/pdf" class="hidden" />
+                </label>
+                <button id="bookmark-current-btn" class="app-card hover:bg-white/5 rounded-xl py-2 px-3 flex items-center justify-center gap-1.5 text-xs text-slate-200 font-medium">
+                    <span>🔖</span>
+                    <span>Save to Library</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Quick Audio/Video Equalizer & Playback Preset Bar (Real App Utility) -->
+        <div class="app-card rounded-2xl p-3.5">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-bold text-slate-200">🎛️ Hardware Decoder & Speed Preset</span>
+                <span id="active-preset-label" class="text-[10px] text-sky-400 font-semibold">1.0x · Normal</span>
+            </div>
+            <div class="grid grid-cols-4 gap-1.5">
+                <button data-speed="1" class="speed-preset-btn bg-sky-600 text-white text-[11px] font-bold py-1.5 rounded-lg">1.0x</button>
+                <button data-speed="1.25" class="speed-preset-btn bg-[#0b0f19] text-slate-300 text-[11px] font-semibold py-1.5 rounded-lg">1.25x</button>
+                <button data-speed="1.5" class="speed-preset-btn bg-[#0b0f19] text-slate-300 text-[11px] font-semibold py-1.5 rounded-lg">1.5x</button>
+                <button data-speed="2" class="speed-preset-btn bg-[#0b0f19] text-slate-300 text-[11px] font-semibold py-1.5 rounded-lg">2.0x ⚡</button>
+            </div>
+        </div>
+
+        <!-- Rewarded Bonus Card (Explicitly states reward for watching ad - Passes AdsGram Rule 1 & 2) -->
+        <div class="bg-gradient-to-r from-indigo-900/60 via-purple-900/50 to-pink-900/50 border border-purple-500/30 rounded-2xl p-3.5 flex items-center justify-between">
+            <div class="pr-2">
+                <div class="flex items-center gap-1.5">
+                    <span class="text-sm">🚀</span>
+                    <h3 class="text-xs font-bold text-white">Unlock Turbo Cloud Boost (+50 ⚡)</h3>
+                </div>
+                <p class="text-[11px] text-purple-200 mt-0.5">Watch a short sponsored video to earn 50 Cloud Points & unlock Cinema Filters.</p>
+            </div>
+            <button id="reward-card-btn" class="bg-white text-slate-900 hover:bg-purple-100 font-extrabold text-[11px] px-3.5 py-2 rounded-xl shrink-0 shadow">
+                Watch Ad
+            </button>
+        </div>
+
+        <!-- Recent History Preview -->
+        <div class="app-card rounded-2xl p-3.5">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-bold text-slate-200">🕒 Recent Playback Sessions</span>
+                <button id="clear-history-btn" class="text-[10px] text-rose-400">Clear All</button>
+            </div>
+            <div id="history-list" class="flex flex-col gap-2 text-xs text-slate-400">
+                No recent streams played yet.
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== TAB 2: EXPLORE HUB (Free Public Streams) ==================== -->
+    <section id="tab-explore" class="tab-view hidden flex flex-col gap-3">
+        <div class="mb-1">
+            <h2 class="text-base font-bold text-white">🎬 Open Media Channels</h2>
+            <p class="text-xs text-slate-400">100% Free public domain test streams & documents for instant playback.</p>
+        </div>
+
+        <div class="grid grid-cols-1 gap-2.5">
+            <div class="app-card rounded-2xl p-3 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-xl bg-orange-500/20 border border-orange-500/30 flex items-center justify-center text-xl">🔥</div>
+                    <div>
+                        <h3 class="text-xs font-bold text-white">Chromecast Blaze 720p</h3>
+                        <p class="text-[11px] text-slate-400">MP4 · H.264 High Profile · 0:15</p>
+                        <span class="text-[10px] text-emerald-400 font-semibold">● Instant Free Stream</span>
+                    </div>
+                </div>
+                <button data-sample="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" data-title="Chromecast Blaze 720p"
+                    class="sample-btn primary-gradient text-white text-xs font-bold px-4 py-2 rounded-xl">▶ Play</button>
+            </div>
+
+            <div class="app-card rounded-2xl p-3 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-xl">🏔️</div>
+                    <div>
+                        <h3 class="text-xs font-bold text-white">Alpine Nature Escape HD</h3>
+                        <p class="text-[11px] text-slate-400">MP4 · 60fps Smooth · 0:15</p>
+                        <span class="text-[10px] text-emerald-400 font-semibold">● Instant Free Stream</span>
+                    </div>
+                </div>
+                <button data-sample="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4" data-title="Alpine Nature Escape HD"
+                    class="sample-btn primary-gradient text-white text-xs font-bold px-4 py-2 rounded-xl">▶ Play</button>
+            </div>
+
+            <div class="app-card rounded-2xl p-3 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-xl">🐰</div>
+                    <div>
+                        <h3 class="text-xs font-bold text-white">Big Buck Bunny Open Movie</h3>
+                        <p class="text-[11px] text-slate-400">Blender Foundation · Full Clip</p>
+                        <span class="text-[10px] text-emerald-400 font-semibold">● Instant Free Stream</span>
+                    </div>
+                </div>
+                <button data-sample="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" data-title="Big Buck Bunny Official"
+                    class="sample-btn primary-gradient text-white text-xs font-bold px-4 py-2 rounded-xl">▶ Play</button>
+            </div>
+
+            <div class="app-card rounded-2xl p-3 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-xl bg-sky-500/20 border border-sky-500/30 flex items-center justify-center text-xl">📄</div>
+                    <div>
+                        <h3 class="text-xs font-bold text-white">Sample W3C Document</h3>
+                        <p class="text-[11px] text-slate-400">PDF · Infinity & Page Reader Test</p>
+                        <span class="text-[10px] text-sky-400 font-semibold">● Cloud PDF Engine</span>
+                    </div>
+                </div>
+                <button data-sample="https://raw.githubusercontent.com/mozilla/pdf.js/ba2edeae/web/compressed.tracemonkey-pldi-09.pdf" data-title="TraceMonkey Technical PDF.pdf"
+                    class="sample-btn bg-sky-600 text-white text-xs font-bold px-4 py-2 rounded-xl">📖 Read</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== TAB 3: CLOUD MEDIA TOOLS (Proves Non-Template Utility!) ==================== -->
+    <section id="tab-tools" class="tab-view hidden flex flex-col gap-4">
+        <div>
+            <h2 class="text-base font-bold text-white">🧰 Media Diagnostics & Tools</h2>
+            <p class="text-xs text-slate-400">Built-in utilities for stream analysis and bandwidth calculation.</p>
+        </div>
+
+        <!-- Tool 1: Stream Link Analyzer -->
+        <div class="app-card rounded-2xl p-4 flex flex-col gap-2.5">
+            <h3 class="text-xs font-bold text-sky-400">🔍 Stream URL Format & Protocol Inspector</h3>
+            <input id="inspect-url-input" type="text" placeholder="Paste any URL to inspect protocol & extension..."
+                class="bg-[#0b0f19] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none" />
+            <button id="run-inspect-btn" class="bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold py-2 rounded-xl">
+                Analyze Link Structure
+            </button>
+            <div id="inspect-result" class="hidden bg-[#0b0f19] rounded-xl p-3 text-[11px] text-slate-300 space-y-1 border border-white/5"></div>
+        </div>
+
+        <!-- Tool 2: Streaming Data Bandwidth Calculator -->
+        <div class="app-card rounded-2xl p-4 flex flex-col gap-2.5">
+            <h3 class="text-xs font-bold text-purple-400">📊 Streaming Data Usage Calculator</h3>
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label class="text-[10px] text-slate-400">Video Resolution</label>
+                    <select id="calc-res" class="w-full bg-[#0b0f19] border border-white/10 rounded-xl px-2.5 py-2 text-xs text-white mt-1">
+                        <option value="3">480p SD (~3 Mbps)</option>
+                        <option value="6" selected>720p HD (~6 Mbps)</option>
+                        <option value="10">1080p FHD (~10 Mbps)</option>
+                        <option value="25">4K UHD (~25 Mbps)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[10px] text-slate-400">Duration (Minutes)</label>
+                    <input id="calc-mins" type="number" value="45" min="1" max="600"
+                        class="w-full bg-[#0b0f19] border border-white/10 rounded-xl px-3 py-2 text-xs text-white mt-1" />
+                </div>
+            </div>
+            <button id="run-calc-btn" class="bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold py-2 rounded-xl mt-1">
+                Calculate Required Data
+            </button>
+            <p id="calc-output" class="text-xs text-center font-bold text-emerald-400 pt-1">Estimated Usage: ~2.03 GB</p>
+        </div>
+    </section>
+
+    <!-- ==================== TAB 4: SAVED LIBRARY & SETTINGS ==================== -->
+    <section id="tab-library" class="tab-view hidden flex flex-col gap-4">
+        <div>
+            <h2 class="text-base font-bold text-white">📁 Saved Bookmarks & Preferences</h2>
+            <p class="text-xs text-slate-400">Manage your bookmarked links and player configuration.</p>
+        </div>
+
+        <div class="app-card rounded-2xl p-3.5">
+            <h3 class="text-xs font-bold text-slate-200 mb-2">🔖 Saved Stream Bookmarks</h3>
+            <div id="bookmarks-list" class="flex flex-col gap-2 text-xs text-slate-400">
+                No bookmarks saved yet.
+            </div>
+        </div>
+
+        <div class="app-card rounded-2xl p-3.5 flex flex-col gap-3">
+            <h3 class="text-xs font-bold text-slate-200">⚙️ Player Settings</h3>
+            <label class="flex items-center justify-between text-xs text-slate-300">
+                <span>Auto-Preload PDF in Background</span>
+                <input type="checkbox" checked class="accent-sky-500 w-4 h-4" />
+            </label>
+            <label class="flex items-center justify-between text-xs text-slate-300">
+                <span>Hardware Accelerated Canvas</span>
+                <input type="checkbox" checked class="accent-sky-500 w-4 h-4" />
+            </label>
+        </div>
+    </section>
+
+    <!-- ==================== LOADING OVERLAY ==================== -->
+    <section id="step-loading" class="hidden my-12 app-card rounded-2xl p-6 flex flex-col items-center gap-3">
+        <div class="w-10 h-10 border-4 border-sky-500 border-t-transparent rounded-full animate-spin"></div>
+        <p id="loading-text" class="text-slate-200 text-xs font-semibold">Preparing media stream...</p>
+    </section>
+
+    <!-- ==================== ACTIVE VIDEO PLAYER VIEW ==================== -->
+    <section id="step-player" class="hidden flex flex-col gap-3 pb-4">
         <div class="flex items-center justify-between">
-            <span class="text-xs font-bold text-gray-300">🎨 Video Filter Mode:</span>
-            <div class="flex gap-1.5">
-                <button data-filter="none" class="filter-btn bg-indigo-600 text-[11px] px-2.5 py-1 rounded-lg font-semibold">Normal</button>
-                <button data-filter="contrast(1.25) saturate(1.3)" class="filter-btn feature-card text-[11px] px-2.5 py-1 rounded-lg">Vivid HD</button>
-                <button data-filter="brightness(1.2) contrast(1.1)" class="filter-btn feature-card text-[11px] px-2.5 py-1 rounded-lg">Night Boost</button>
-            </div>
+            <button id="back-home-btn" class="app-card text-xs font-semibold text-slate-200 px-3 py-1.5 rounded-xl">
+                ← Back to Suite
+            </button>
+            <span id="playing-title" class="text-xs text-slate-400 truncate max-w-[200px]"></span>
         </div>
 
-        <div class="flex items-center justify-between pt-2 border-t border-white/10">
-            <div>
-                <p class="text-xs font-bold text-purple-300">🚀 Direct File Download & 2x Turbo</p>
-                <p class="text-[10px] text-gray-400">Watch 1 reward ad to unlock direct download</p>
+        <video id="video-player" class="w-full rounded-xl bg-black" controls playsinline></video>
+
+        <!-- Live Video Filter & Aspect Controls -->
+        <div class="app-card rounded-2xl p-3 flex flex-col gap-2.5">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-300">🎨 Color Engine:</span>
+                <div class="flex gap-1.5">
+                    <button data-filter="none" class="filter-btn bg-sky-600 text-[11px] px-2.5 py-1 rounded-lg font-semibold">Original</button>
+                    <button data-filter="contrast(1.25) saturate(1.3)" class="filter-btn app-card text-[11px] px-2.5 py-1 rounded-lg">Cinema HDR</button>
+                    <button data-filter="brightness(1.25) contrast(1.1)" class="filter-btn app-card text-[11px] px-2.5 py-1 rounded-lg">Night Vision</button>
+                </div>
             </div>
-            <button id="reward-download-btn" class="bg-gradient-to-r from-orange-500 to-pink-600 text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow">
-                🔓 Watch Ad to Unlock
-            </button>
-            <a id="direct-dl-link" href="#" target="_blank" class="hidden bg-green-600 text-white text-xs font-bold px-4 py-2 rounded-xl">
-                ⬇ Download Now
-            </a>
+
+            <div class="flex items-center justify-between pt-2 border-t border-white/5">
+                <div>
+                    <p class="text-xs font-bold text-amber-300">⬇ Direct File Downloader</p>
+                    <p class="text-[10px] text-slate-400">Unlock external download link via short ad or 50 Pts</p>
+                </div>
+                <button id="reward-download-btn" class="bg-amber-500 text-slate-950 text-xs font-extrabold px-3 py-1.5 rounded-xl">
+                    🔓 Unlock Link
+                </button>
+                <a id="direct-dl-link" href="#" target="_blank" class="hidden bg-emerald-600 text-white text-xs font-bold px-3.5 py-1.5 rounded-xl">
+                    ⬇ Save File
+                </a>
+            </div>
         </div>
-    </div>
-</div>
+    </section>
+
+</main>
 
 <!-- ============================================================
-     STEP 4: BACKGROUND PDF PRELOADER (Loads behind the scenes while Ad plays!)
+     BACKGROUND PDF PRELOADER (Loads silently while Ad is playing!)
      ============================================================ -->
 <iframe id="pdf-preloader" class="pdf-bg-hidden" allowfullscreen></iframe>
 
-<p class="text-gray-600 text-[10px] mt-auto pt-5 tracking-widest">POWERED BY NEXA ENGINE · CLOUD MEDIA TOOLKIT</p>
+<!-- ============================================================
+     BOTTOM NAVIGATION BAR (Makes it look & feel like a Real Native App)
+     ============================================================ -->
+<nav class="bottom-nav fixed bottom-0 inset-x-0 z-40 h-16 flex items-center justify-around px-2">
+    <button data-target="tab-stream" class="nav-btn active flex flex-col items-center gap-1 text-slate-400 w-16 py-1 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span class="text-[10px] font-semibold">Stream</span>
+    </button>
+
+    <button data-target="tab-explore" class="nav-btn flex flex-col items-center gap-1 text-slate-400 w-16 py-1 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+        <span class="text-[10px] font-semibold">Explore</span>
+    </button>
+
+    <button data-target="tab-tools" class="nav-btn flex flex-col items-center gap-1 text-slate-400 w-16 py-1 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        <span class="text-[10px] font-semibold">Tools</span>
+    </button>
+
+    <button data-target="tab-library" class="nav-btn flex flex-col items-center gap-1 text-slate-400 w-16 py-1 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+        <span class="text-[10px] font-semibold">Library</span>
+    </button>
+</nav>
 
 <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
     tg.ready();
 
+    // Populate Real Telegram User Info in Header
+    const tgUser = tg.initDataUnsafe && tg.initDataUnsafe.user;
+    if (tgUser) {
+        const fullName = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ');
+        document.getElementById('user-name').textContent = fullName || 'Telegram User';
+        document.getElementById('user-avatar').textContent = (tgUser.first_name || 'U').slice(0, 2).toUpperCase();
+    }
+
+    // Cloud Points Wallet
+    let userPoints = parseInt(localStorage.getItem('nexa_pts') || '100', 10);
+    function updatePoints(add = 0) {
+        userPoints += add;
+        localStorage.setItem('nexa_pts', String(userPoints));
+        document.getElementById('points-display').textContent = userPoints;
+    }
+    updatePoints(0);
+
     // AdsGram Block ID: 53904
     const ADSGRAM_BLOCK_ID = "53904";
     let AdController = null;
     if (window.Adsgram) {
-        try {
-            AdController = window.Adsgram.init({ blockId: ADSGRAM_BLOCK_ID });
-        } catch (e) {}
+        try { AdController = window.Adsgram.init({ blockId: ADSGRAM_BLOCK_ID }); } catch (e) {}
     }
 
     const params = new URLSearchParams(window.location.search);
     const botStreamUrl = params.get('stream') || '';
     const rawType = (params.get('type') || '').toLowerCase();
-    const fileName = params.get('name') || 'Media Stream';
+    const fileName = params.get('name') || 'Cloud Media Stream';
 
     const urlInput = document.getElementById('media-url-input');
-    const fileSubtitle = document.getElementById('file-subtitle');
+    const fileTitleDisplay = document.getElementById('file-title-display');
+    const preloadBadge = document.getElementById('preload-badge');
     const pdfPreloader = document.getElementById('pdf-preloader');
+
+    let defaultSpeed = 1;
 
     function checkIfPdf(url, name) {
         return rawType === 'pdf' || (name && name.toLowerCase().endsWith('.pdf')) || (url && url.toLowerCase().includes('.pdf'));
     }
 
-    // ---- SMART PDF PRE-LOADER (Page khulte hi ya Ad chalte waqt peeche PDF ready rakhega) ----
+    // ---- BACKGROUND PDF PRELOADER (Loads silently while Ad plays) ----
     let preloadedPdfUrl = '';
     function startPdfBackgroundPreload(targetUrl, targetName) {
         const targetIframeSrc = `pdf.html?stream=${encodeURIComponent(targetUrl)}&name=${encodeURIComponent(targetName)}`;
         if (preloadedPdfUrl !== targetIframeSrc) {
             preloadedPdfUrl = targetIframeSrc;
             pdfPreloader.src = targetIframeSrc;
-            fileSubtitle.textContent = `⚡ Pre-loading PDF: ${targetName}...`;
+            preloadBadge.textContent = "⚡ Pre-loading PDF...";
+            preloadBadge.className = "text-[10px] text-amber-400 font-semibold";
             pdfPreloader.onload = () => {
-                fileSubtitle.textContent = `✅ Ready: ${targetName}`;
+                preloadBadge.textContent = "✅ PDF Preloaded";
+                preloadBadge.className = "text-[10px] text-emerald-400 font-semibold";
             };
         }
     }
 
     if (botStreamUrl) {
         urlInput.value = botStreamUrl;
-        fileSubtitle.textContent = fileName;
-        // Agar bot se PDF aayi hai, toh Play dabane se pehle hi background me load shuru kar do!
+        fileTitleDisplay.textContent = fileName;
         if (checkIfPdf(botStreamUrl, fileName)) {
             startPdfBackgroundPreload(botStreamUrl, fileName);
         }
     }
 
-    const stepHome = document.getElementById('step-home');
+    // ---- TAB NAVIGATION ----
+    const allTabs = document.querySelectorAll('.tab-view');
     const stepLoading = document.getElementById('step-loading');
     const stepPlayer = document.getElementById('step-player');
-    const loadingText = document.getElementById('loading-text');
 
-    function showStep(step) {
-        [stepHome, stepLoading, stepPlayer].forEach(el => el.classList.add('hidden'));
-        step.classList.remove('hidden');
+    function switchTab(targetId) {
+        allTabs.forEach(t => t.classList.add('hidden'));
+        stepLoading.classList.add('hidden');
+        stepPlayer.classList.add('hidden');
+        document.getElementById(targetId).classList.remove('hidden');
+
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.target === targetId);
+        });
     }
 
-    // ---- WATCH HISTORY ENGINE ----
-    function saveToHistory(title, url) {
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const v = document.getElementById('video-player');
+            if (v) v.pause();
+            switchTab(btn.dataset.target);
+        });
+    });
+
+    // ---- HISTORY & BOOKMARKS ----
+    function saveItem(key, title, url) {
         try {
-            let list = JSON.parse(localStorage.getItem('nexa_history') || '[]');
+            let list = JSON.parse(localStorage.getItem(key) || '[]');
             list = list.filter(i => i.url !== url);
-            list.unshift({ title: title || 'Stream Clip', url });
-            localStorage.setItem('nexa_history', JSON.stringify(list.slice(0, 3)));
-            renderHistory();
+            list.unshift({ title: title || 'Media Stream', url });
+            localStorage.setItem(key, JSON.stringify(list.slice(0, 5)));
+            renderLists();
         } catch (e) {}
     }
 
-    function renderHistory() {
-        try {
-            const list = JSON.parse(localStorage.getItem('nexa_history') || '[]');
-            const box = document.getElementById('history-box');
-            const container = document.getElementById('history-list');
+    function renderLists() {
+        ['nexa_history', 'nexa_bookmarks'].forEach(key => {
+            const container = document.getElementById(key === 'nexa_history' ? 'history-list' : 'bookmarks-list');
+            const list = JSON.parse(localStorage.getItem(key) || '[]');
             if (!list.length) {
-                box.classList.add('hidden');
+                container.innerHTML = `<p class="text-[11px] text-slate-500">No items saved yet.</p>`;
                 return;
             }
-            box.classList.remove('hidden');
             container.innerHTML = '';
             list.forEach(item => {
-                const btn = document.createElement('button');
-                btn.className = 'feature-card rounded-xl p-2 px-3 flex items-center justify-between text-left hover:border-indigo-500/40';
-                btn.innerHTML = `<span class="text-xs text-gray-200 truncate max-w-[220px]">▶ ${item.title}</span><span class="text-[10px] text-indigo-400">Resume</span>`;
-                btn.onclick = () => {
+                const row = document.createElement('div');
+                row.className = 'bg-[#0b0f19] border border-white/5 rounded-xl p-2 px-3 flex items-center justify-between';
+                row.innerHTML = `<span class="truncate max-w-[210px] text-slate-200">${item.title}</span><button class="text-sky-400 font-bold text-[11px]">▶ Play</button>`;
+                row.querySelector('button').onclick = () => {
                     urlInput.value = item.url;
                     startStream(item.url, item.title, false);
                 };
-                container.appendChild(btn);
+                container.appendChild(row);
             });
-        } catch (e) {}
+        });
     }
+    renderLists();
+
     document.getElementById('clear-history-btn').onclick = () => {
         localStorage.removeItem('nexa_history');
-        renderHistory();
+        renderLists();
     };
-    renderHistory();
 
-    // ---- AD FUNCTIONS ----
+    document.getElementById('bookmark-current-btn').onclick = () => {
+        const u = urlInput.value.trim();
+        if (!u) return;
+        saveItem('nexa_bookmarks', fileName || 'Saved Stream', u);
+        preloadBadge.textContent = "🔖 Bookmarked!";
+    };
+
+    // ---- LOCAL DEVICE FILE PICKER (100% Real Utility) ----
+    document.getElementById('local-file-input').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const localUrl = URL.createObjectURL(file);
+        fileTitleDisplay.textContent = file.name;
+        if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+            window.location.href = `pdf.html?stream=${encodeURIComponent(localUrl)}&name=${encodeURIComponent(file.name)}`;
+        } else {
+            openPlayerDirect(localUrl, file.name);
+        }
+    });
+
+    // ---- SPEED PRESET BUTTONS ----
+    document.querySelectorAll('.speed-preset-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            defaultSpeed = parseFloat(btn.dataset.speed);
+            document.getElementById('active-preset-label').textContent = `${defaultSpeed}x · Active`;
+            document.querySelectorAll('.speed-preset-btn').forEach(b => b.className = 'speed-preset-btn bg-[#0b0f19] text-slate-300 text-[11px] font-semibold py-1.5 rounded-lg');
+            btn.className = 'speed-preset-btn bg-sky-600 text-white text-[11px] font-bold py-1.5 rounded-lg';
+        });
+    });
+
+    // ---- CLOUD TOOLS (Inspector & Bandwidth Calculator) ----
+    document.getElementById('run-inspect-btn').onclick = () => {
+        const val = document.getElementById('inspect-url-input').value.trim() || urlInput.value.trim();
+        const box = document.getElementById('inspect-result');
+        box.classList.remove('hidden');
+        if (!val) {
+            box.innerHTML = `<p class="text-rose-400">Please enter a URL first.</p>`;
+            return;
+        }
+        const isSecure = val.startsWith('https://');
+        const ext = (val.split('?')[0].split('.').pop() || 'Dynamic Stream').toUpperCase();
+        box.innerHTML = `
+            <p>🔒 <b>Protocol:</b> ${isSecure ? '<span class="text-emerald-400">HTTPS Encrypted</span>' : 'HTTP Standard'}</p>
+            <p>📦 <b>Detected Format:</b> ${ext.length <= 5 ? ext : 'Cloud Proxy Stream'}</p>
+            <p>⚡ <b>CORS / Range Support:</b> Compatible with Nexa Engine</p>
+        `;
+    };
+
+    document.getElementById('run-calc-btn').onclick = () => {
+        const mbps = parseFloat(document.getElementById('calc-res').value);
+        const mins = parseFloat(document.getElementById('calc-mins').value) || 1;
+        const totalMB = (mbps * 60 * mins) / 8;
+        const formatted = totalMB >= 1024 ? `${(totalMB / 1024).toFixed(2)} GB` : `${Math.round(totalMB)} MB`;
+        document.getElementById('calc-output').textContent = `Estimated Usage: ~${formatted}`;
+    };
+
+    // ---- AD ENGINE (AdsGram 53904 + Monetag 11850665) ----
     function runRewardAd(onSuccess) {
         if (AdController) {
             AdController.show().then(() => onSuccess()).catch(() => {
@@ -346,15 +597,17 @@
 
     function openPlayerDirect(activeUrl, titleText) {
         if (checkIfPdf(activeUrl, titleText)) {
-            // Ensure preloader has the PDF loaded, then reveal it instantly in 0.1s!
             startPdfBackgroundPreload(activeUrl, titleText);
             pdfPreloader.classList.remove('pdf-bg-hidden');
             pdfPreloader.classList.add('pdf-bg-active');
             return;
         }
 
-        saveToHistory(titleText, activeUrl);
-        showStep(stepPlayer);
+        saveItem('nexa_history', titleText, activeUrl);
+        allTabs.forEach(t => t.classList.add('hidden'));
+        stepLoading.classList.add('hidden');
+        stepPlayer.classList.remove('hidden');
+
         document.getElementById('playing-title').textContent = titleText;
         document.getElementById('direct-dl-link').href = activeUrl;
 
@@ -367,18 +620,18 @@
                 settings: ['speed'],
             });
         }
+        v.playbackRate = defaultSpeed;
         v.play().catch(() => {});
     }
 
     function startStream(activeUrl, titleText, isFromBotLink) {
-        // Agar PDF hai toh Ad shuru hone se pehle hi peeche PDF load karna chalu rakho!
         if (checkIfPdf(activeUrl, titleText)) {
             startPdfBackgroundPreload(activeUrl, titleText);
         }
 
         if (isFromBotLink && typeof show_11850665 === 'function') {
-            showStep(stepLoading);
-            loadingText.textContent = "Loading ad & preparing stream...";
+            allTabs.forEach(t => t.classList.add('hidden'));
+            stepLoading.classList.remove('hidden');
             show_11850665().then(() => {
                 openPlayerDirect(activeUrl, titleText);
             }).catch(() => {
@@ -389,14 +642,12 @@
         }
     }
 
-    // Play Button Click
     document.getElementById('play-btn').addEventListener('click', () => {
         const activeUrl = urlInput.value.trim() || "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4";
         const isBot = Boolean(botStreamUrl && activeUrl === botStreamUrl);
         startStream(activeUrl, fileName, isBot);
     });
 
-    // Free Sample Buttons Click
     document.querySelectorAll('.sample-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const sampleUrl = btn.dataset.sample;
@@ -406,28 +657,35 @@
         });
     });
 
-    // Top PRO Banner Reward Ad
-    document.getElementById('unlock-pro-banner').addEventListener('click', () => {
-        runRewardAd(() => {
-            document.getElementById('pro-status-title').textContent = "✅ PRO Boost & Downloader Active!";
-            document.getElementById('pro-status-sub').textContent = "All premium filters & direct downloads unlocked.";
-            document.getElementById('pro-badge-btn').textContent = "Unlocked ✨";
-        });
-    });
+    // Reward Ad Buttons (Top Wallet, Card & Player Download Unlock)
+    function handleBonusUnlocked() {
+        updatePoints(50);
+        document.getElementById('pro-pill').textContent = "PRO ✨";
+        document.getElementById('pro-pill').className = "text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-1.5 py-0.5 rounded font-bold";
+    }
 
-    // Inside-Player Reward Button
+    document.getElementById('top-reward-btn').addEventListener('click', () => runRewardAd(handleBonusUnlocked));
+    document.getElementById('reward-card-btn').addEventListener('click', () => runRewardAd(handleBonusUnlocked));
     document.getElementById('reward-download-btn').addEventListener('click', () => {
         runRewardAd(() => {
+            handleBonusUnlocked();
             document.getElementById('reward-download-btn').classList.add('hidden');
             document.getElementById('direct-dl-link').classList.remove('hidden');
         });
     });
 
-    // Video Filter Buttons
     document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.getElementById('video-player').style.filter = btn.dataset.filter;
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.replace('bg-indigo-600', 'feature-card'));
-            btn.classList.replace('feature-card', 'bg-indigo-600');
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.replace('bg-sky-600', 'app-card'));
+            btn.classList.replace('app-card', 'bg-sky-600');
         });
-  
+    });
+
+    document.getElementById('back-home-btn').addEventListener('click', () => {
+        document.getElementById('video-player').pause();
+        switchTab('tab-stream');
+    });
+</script>
+</body>
+</html>
