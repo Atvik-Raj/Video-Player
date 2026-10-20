@@ -14,8 +14,7 @@
 <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
 <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
 
-<!-- ==================== AD NETWORKS (AdsGram + Monetag) ==================== -->
-<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+<!-- ==================== MONETAG SDK ONLY (Zone: 11850665) ==================== -->
 <script src="//libtl.com/sdk.js" data-zone="11850665" data-sdk="show_11850665"></script>
 
 <style>
@@ -52,47 +51,44 @@
 <body class="flex flex-col items-center min-h-screen px-4 py-5 select-none">
 
 <!-- ============================================================
-     STEP 1: NEBULA-STYLE HOME DASHBOARD (100% Moderation Safe)
+     STEP 1: NEBULA-STYLE HOME DASHBOARD
      ============================================================ -->
 <div id="step-home" class="w-full max-w-md flex flex-col items-center">
 
-    <!-- Top VIP Banner -->
-    <div id="vip-banner-btn" class="vip-banner w-full rounded-2xl p-3 px-4 flex items-center justify-between mb-7 cursor-pointer">
+    <!-- Top Banner -->
+    <div class="vip-banner w-full rounded-2xl p-3 px-4 flex items-center justify-between mb-7">
         <div class="flex items-center gap-2.5">
-            <span class="text-lg">💎</span>
+            <span class="text-lg">⚡</span>
             <div>
-                <p class="text-xs font-bold text-white leading-tight">NEW: Go 100% Ad-Free! ⚡</p>
-                <p class="text-[10px] text-purple-200">Instant high-speed streaming activation</p>
+                <p class="text-xs font-bold text-white leading-tight">Nexa High-Speed Cloud Player</p>
+                <p class="text-[10px] text-purple-200">Instant direct streaming & PDF reader</p>
             </div>
         </div>
-        <span class="bg-white text-purple-900 text-[11px] font-extrabold px-3 py-1.5 rounded-full whitespace-nowrap shadow">
-            VIP Mode →
+        <span class="bg-white text-purple-900 text-[11px] font-extrabold px-3 py-1 rounded-full whitespace-nowrap shadow">
+            PRO
         </span>
     </div>
 
-    <!-- Center App Icon + Go Ad-Free Pill -->
+    <!-- Center App Icon -->
     <div class="relative flex flex-col items-center mb-3">
-        <span id="ad-free-pill" class=" -top-3 -right-20 bg-gradient-to-r from-indigo-600 to-purple-600 text-[10px] font-bold px-2.5 py-1 rounded-full border border-purple-400/40 shadow-lg cursor-pointer">
-            ⭐ Go Ad-Free
-        </span>
         <div class="w-16 h-16 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(99,102,241,0.5)]">
             <svg class="w-8 h-8 text-white translate-x-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
         </div>
     </div>
 
-    <!-- Title & Subtitle -->
+    <!-- Title & File Name -->
     <h1 class="text-2xl font-extrabold tracking-wide bg-gradient-to-r from-white via-indigo-200 to-purple-400 bg-clip-text text-transparent">
         Nexa Player
     </h1>
-    <p id="file-subtitle" class="text-gray-400 text-xs mt-1 mb-6 text-center">
+    <p id="file-subtitle" class="text-gray-400 text-xs mt-1 mb-6 text-center truncate max-w-xs">
         Paste a secure media link to watch or download
     </p>
 
-    <!-- URL Input Box + Play Button (No "Watch Ad" text!) -->
+    <!-- URL Input Box + Play Button -->
     <div class="input-box w-full rounded-2xl p-2 pl-4 flex items-center justify-between gap-2 mb-6">
         <input id="media-url-input" type="text" 
-            placeholder="https://nexaplayer.site/stream/..." 
-            class="bg-transparent text-gray-200 text-xs w-full focus:outline-none truncate" />
+            placeholder="https://..." 
+            class="bg-transparent text-gray-200 text-xs w-full focus:outline-none truncate" readonly />
         <button id="play-btn" 
             class="play-btn-glow hover:opacity-95 active:scale-95 text-white font-bold text-xs py-3 px-6 rounded-xl flex items-center gap-1.5 transition-all shrink-0">
             <span>▶</span>
@@ -100,7 +96,7 @@
         </button>
     </div>
 
-    <!-- 3 Feature Cards (Makes it look like a complete utility app for moderators) -->
+    <!-- 3 Feature Cards -->
     <div class="w-full flex flex-col gap-3">
         <div class="feature-card rounded-2xl p-3.5 flex items-center gap-3.5">
             <div class="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-yellow-400 text-lg shrink-0">
@@ -135,18 +131,18 @@
 </div>
 
 <!-- ============================================================
-     STEP 2: LOADING STREAM SPINNER
+     STEP 2: LOADING AD / STREAM SPINNER
      ============================================================ -->
 <div id="step-loading" class="hidden my-auto w-full max-w-md feature-card rounded-2xl p-6 flex flex-col items-center gap-3">
     <div class="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-    <p id="loading-text" class="text-gray-300 text-sm">Preparing stream...</p>
+    <p id="loading-text" class="text-gray-300 text-sm">Loading stream...</p>
 </div>
 
 <!-- ============================================================
      STEP 3: ERROR BOX
      ============================================================ -->
 <div id="step-error" class="hidden my-auto w-full max-w-md feature-card rounded-2xl p-6 flex flex-col items-center gap-3 border border-red-500/30">
-    <p class="text-red-400 font-semibold text-center text-sm" id="error-text">Please enter a valid media link.</p>
+    <p class="text-red-400 font-semibold text-center text-sm" id="error-text">Invalid link: file not specified.</p>
     <button id="retry-btn" class="bg-indigo-600 text-white text-xs font-bold py-2.5 px-6 rounded-xl">← Back</button>
 </div>
 
@@ -162,48 +158,35 @@
     <video id="video-player" class="hidden w-full max-w-2xl rounded-xl" controls playsinline></video>
 
     <div id="other-viewer" class="hidden w-full max-w-md feature-card rounded-2xl p-6 flex flex-col items-center gap-4">
-        <p class="text-gray-300 text-sm text-center">Ready for direct download or external play.</p>
+        <p class="text-gray-300 text-sm text-center">Ye file type seedha preview nahi ho sakti.</p>
         <a id="other-download" href="#" target="_blank"
-           class="play-btn-glow text-white font-semibold py-2.5 px-6 rounded-xl text-xs">⬇ Open / Download</a>
+           class="play-btn-glow text-white font-semibold py-2.5 px-6 rounded-xl text-xs">⬇ Download</a>
     </div>
 </div>
 
 <p class="text-gray-600 text-[10px] mt-auto pt-6 tracking-widest">POWERED BY NEXA ENGINE · FAST & SECURE</p>
 
 <!-- ============================================================
-     PART 5: LOGIC
+     PART 5: LOGIC (ONLY MONETAG + ORIGINAL WORKING PLAYER)
      ============================================================ -->
 <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
     tg.ready();
 
-    // AdsGram Block ID: 53904
-    const ADSGRAM_BLOCK_ID = "53904";
-    let AdController = null;
-    if (window.Adsgram) {
-        try {
-            AdController = window.Adsgram.init({ blockId: ADSGRAM_BLOCK_ID });
-        } catch (e) {}
-    }
-
     const params = new URLSearchParams(window.location.search);
-    let streamUrl = params.get('stream') || '';
-    const rawType = (params.get('type') || '').toLowerCase();
-    const fileName = params.get('name') || 'Media Stream';
+    const streamUrl = params.get('stream');
+    const rawType   = (params.get('type') || '').toLowerCase();
+    const fileName  = params.get('name') || 'File';
+
+    const isPdf = rawType === 'pdf' || fileName.toLowerCase().endsWith('.pdf') || (streamUrl && streamUrl.toLowerCase().includes('.pdf'));
 
     const urlInput = document.getElementById('media-url-input');
     const fileSubtitle = document.getElementById('file-subtitle');
 
-    // Pre-fill link box just like Nebula Player!
     if (streamUrl) {
         urlInput.value = streamUrl;
-        if (fileName && fileName !== 'File') {
-            fileSubtitle.textContent = fileName;
-        }
-    } else {
-        // Default demo video if a moderator opens the Mini App directly without bot params
-        urlInput.value = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4";
+        fileSubtitle.textContent = fileName;
     }
 
     const stepHome = document.getElementById('step-home');
@@ -222,40 +205,38 @@
         showStep(stepError);
     }
 
-    // ---- AD WATERFALL: AdsGram -> Monetag -> Immediate Open ----
-    function triggerAdThenPlay(onDone) {
+    // ---- MONETAG AD ONLY (Zone: 11850665) ----
+    function playAd(onDone) {
         showStep(stepLoading);
-        loadingText.textContent = "Connecting to fast server...";
-
-        const runMonetagOrOpen = () => {
-            if (typeof show_11850665 === 'function') {
-                show_11850665().then(() => onDone()).catch(() => onDone());
-            } else {
-                onDone();
-            }
-        };
-
-        if (AdController) {
-            AdController.show().then(() => {
+        if (typeof show_11850665 === 'function') {
+            loadingText.textContent = "Loading ad...";
+            show_11850665().then(() => {
                 onDone();
             }).catch(() => {
-                runMonetagOrOpen();
+                onDone();
             });
         } else {
-            runMonetagOrOpen();
+            let seconds = 5;
+            loadingText.textContent = `Loading stream... ${seconds}s`;
+            const timer = setInterval(() => {
+                seconds -= 1;
+                if (seconds <= 0) {
+                    clearInterval(timer);
+                    onDone();
+                } else {
+                    loadingText.textContent = `Loading stream... ${seconds}s`;
+                }
+            }, 1000);
         }
     }
 
     let plyrInstance = null;
 
     function openPlayer() {
-        const activeUrl = urlInput.value.trim() || streamUrl;
-        if (!activeUrl) return showError("Please paste a valid media link first.");
-
-        const isPdf = rawType === 'pdf' || fileName.toLowerCase().endsWith('.pdf') || activeUrl.toLowerCase().includes('.pdf');
+        if (!streamUrl) return showError("Invalid link: file not specified.");
 
         if (isPdf) {
-            window.location.href = `pdf.html?stream=${encodeURIComponent(activeUrl)}&name=${encodeURIComponent(fileName)}`;
+            window.location.href = `pdf.html?stream=${encodeURIComponent(streamUrl)}&name=${encodeURIComponent(fileName)}`;
             return;
         }
 
@@ -264,7 +245,7 @@
 
         const v = document.getElementById('video-player');
         v.classList.remove('hidden');
-        v.src = activeUrl;
+        v.src = streamUrl;
 
         if (!plyrInstance) {
             plyrInstance = new Plyr(v, {
@@ -279,9 +260,8 @@
     }
 
     document.getElementById('play-btn').addEventListener('click', () => {
-        const activeUrl = urlInput.value.trim() || streamUrl;
-        if (!activeUrl) return showError("Please paste a valid media link first.");
-        triggerAdThenPlay(openPlayer);
+        if (!streamUrl) return showError("Invalid link: file not specified.");
+        playAd(openPlayer);
     });
 
     document.getElementById('retry-btn').addEventListener('click', () => showStep(stepHome));
