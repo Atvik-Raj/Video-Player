@@ -55,7 +55,7 @@
         <div>
             <div class="flex items-center gap-1.5">
                 <h1 id="user-name" class="text-xs font-bold text-white leading-none">Nexa Workspace</h1>
-                <span id="pro-pill" class="text-[9px] bg-sky-500/20 text-sky-400 border border-sky-500/30 px-1.5 py-0.5 rounded font-semibold">CLOUD</span>
+                <span class="text-[9px] bg-sky-500/20 text-sky-400 border border-sky-500/30 px-1.5 py-0.5 rounded font-semibold">CLOUD</span>
             </div>
             <p class="text-[10px] text-slate-400 mt-0.5">High-Speed Video & PDF Engine</p>
         </div>
@@ -78,7 +78,7 @@
                 <span class="text-[10px] font-bold uppercase tracking-wider text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded-md">
                     Direct Media Receiver
                 </span>
-                <span id="preload-badge" class="text-[10px] text-emerald-400 font-semibold">● Ready</span>
+                <span class="text-[10px] text-emerald-400 font-semibold">● Ready</span>
             </div>
 
             <h2 id="file-title-display" class="text-sm font-bold text-white truncate mb-1">
@@ -185,7 +185,7 @@
     <!-- LOADING OVERLAY -->
     <section id="step-loading" class="hidden my-12 app-card rounded-2xl p-6 flex flex-col items-center gap-3">
         <div class="w-10 h-10 border-4 border-sky-500 border-t-transparent rounded-full animate-spin"></div>
-        <p id="loading-text" class="text-slate-200 text-xs font-semibold">Loading ad & warming up stream...</p>
+        <p class="text-slate-200 text-xs font-semibold">Loading ad & preparing stream...</p>
     </section>
 
     <!-- VIDEO PLAYER VIEW -->
@@ -241,7 +241,7 @@
     }
 
     const params = new URLSearchParams(window.location.search);
-    const DEFAULT_WORKING_VIDEO = "https://rigid-sybila-smoak-9f8653b9.koyeb.app/watch/-1003840792650/2301?hash=AgADYB";
+    const DEFAULT_WORKING_VIDEO = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4";
     const rawStream = params.get('stream') || '';
     const botStreamUrl = (!rawStream || rawStream.includes('None')) ? DEFAULT_WORKING_VIDEO : rawStream;
     const rawType = (params.get('type') || '').toLowerCase();
@@ -250,7 +250,6 @@
 
     const urlInput = document.getElementById('media-url-input');
     const fileTitleDisplay = document.getElementById('file-title-display');
-    const preloadBadge = document.getElementById('preload-badge');
     let defaultSpeed = 1;
 
     urlInput.value = botStreamUrl;
@@ -258,26 +257,6 @@
 
     function checkIfPdf(url, name) {
         return rawType === 'pdf' || (name && name.toLowerCase().endsWith('.pdf')) || (url && url.toLowerCase().includes('.pdf'));
-    }
-
-    // ---- SAFE PDF NETWORK PRE-WARMER (No zero-width hidden canvas bug!) ----
-    let pdfWarmStarted = false;
-    function warmUpPdfInBackground(targetUrl) {
-        if (pdfWarmStarted || !targetUrl) return;
-        pdfWarmStarted = true;
-        preloadBadge.textContent = "⚡ Warming up PDF...";
-        preloadBadge.className = "text-[10px] text-amber-400 font-semibold";
-        // Warms up Koyeb connection & browser cache while user is on screen / watching ad
-        fetch(targetUrl, { method: 'GET', mode: 'no-cors', cache: 'default' }).then(() => {
-            preloadBadge.textContent = "✅ PDF Ready";
-            preloadBadge.className = "text-[10px] text-emerald-400 font-semibold";
-        }).catch(() => {
-            preloadBadge.textContent = "● Ready";
-        });
-    }
-
-    if (checkIfPdf(botStreamUrl, fileName)) {
-        warmUpPdfInBackground(botStreamUrl);
     }
 
     const allTabs = document.querySelectorAll('.tab-view');
@@ -344,7 +323,6 @@
         const u = urlInput.value.trim();
         if (!u) return;
         saveItem('nexa_bookmarks', fileName, u);
-        preloadBadge.textContent = "🔖 Saved!";
     };
 
     document.getElementById('local-file-input').addEventListener('change', (e) => {
@@ -378,7 +356,6 @@
 
     function openPlayerDirect(activeUrl, titleText) {
         if (checkIfPdf(activeUrl, titleText)) {
-            // Direct navigation guarantees 100% full-screen visible canvas rendering without hidden iframe bugs!
             window.location.href = `pdf.html?stream=${encodeURIComponent(activeUrl)}&name=${encodeURIComponent(titleText)}`;
             return;
         }
@@ -403,12 +380,7 @@
         v.play().catch(() => {});
     }
 
-    // ---- ALWAYS TRIGGER MONETAG AD ON LAUNCH ----
     function startStream(activeUrl, titleText) {
-        if (checkIfPdf(activeUrl, titleText)) {
-            warmUpPdfInBackground(activeUrl);
-        }
-
         if (typeof show_11850665 === 'function') {
             allTabs.forEach(t => t.classList.add('hidden'));
             stepLoading.classList.remove('hidden');
