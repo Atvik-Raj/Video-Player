@@ -12,9 +12,7 @@
 <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
 
 <!-- ==================== AD NETWORKS (Monetag + AdsGram) ==================== -->
-<!-- 1. Monetag SDK (Zone: 11850665) -->
 <script src="//libtl.com/sdk.js" data-zone="11850665" data-sdk="show_11850665"></script>
-<!-- 2. AdsGram SDK -->
 <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
 
 <style>
@@ -36,13 +34,7 @@
         -webkit-backdrop-filter: blur(16px);
         border-top: 1px solid rgba(255, 255, 255, 0.08);
     }
-    .nav-btn.active {
-        color: #38bdf8;
-    }
-    .nav-btn.active svg {
-        transform: translateY(-2px);
-        filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.6));
-    }
+    .nav-btn.active { color: #38bdf8; }
     .primary-gradient {
         background: linear-gradient(135deg, #0284c7 0%, #4f46e5 100%);
     }
@@ -50,24 +42,11 @@
         --plyr-color-main: #0ea5e9;
         --plyr-video-control-background-hover: #0284c7;
     }
-    /* Background PDF Preloader */
-    .pdf-bg-hidden {
-        position: fixed; inset: 0; width: 100vw; height: 100vh;
-        opacity: 0; pointer-events: none; z-index: -10; border: 0;
-    }
-    .pdf-bg-active {
-        position: fixed; inset: 0; width: 100vw; height: 100vh;
-        opacity: 1; pointer-events: auto; z-index: 9999; border: 0; background: #0b0f19;
-    }
-    ::-webkit-scrollbar { width: 4px; height: 4px; }
-    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 8px; }
 </style>
 </head>
 <body class="flex flex-col min-h-screen pb-20 select-none">
 
-<!-- ============================================================
-     TOP APP BAR (Real User Profile + Cloud Points Wallet)
-     ============================================================ -->
+<!-- TOP APP BAR -->
 <header class="sticky top-0 z-30 bg-[#0b0f19]/90 backdrop-blur-md border-b border-white/5 px-4 py-3 flex items-center justify-between">
     <div class="flex items-center gap-2.5">
         <div id="user-avatar" class="w-9 h-9 rounded-full primary-gradient flex items-center justify-center font-bold text-sm shadow-md">
@@ -76,13 +55,12 @@
         <div>
             <div class="flex items-center gap-1.5">
                 <h1 id="user-name" class="text-xs font-bold text-white leading-none">Nexa Workspace</h1>
-                <span id="pro-pill" class="text-[9px] bg-sky-500/20 text-sky-400 border border-sky-500/30 px-1.5 py-0.5 rounded font-semibold">FREE</span>
+                <span id="pro-pill" class="text-[9px] bg-sky-500/20 text-sky-400 border border-sky-500/30 px-1.5 py-0.5 rounded font-semibold">CLOUD</span>
             </div>
-            <p id="app-status-sub" class="text-[10px] text-slate-400 mt-0.5">Cloud Stream & Document Engine</p>
+            <p class="text-[10px] text-slate-400 mt-0.5">High-Speed Video & PDF Engine</p>
         </div>
     </div>
 
-    <!-- Cloud Points / Reward Button (Passes AdsGram Bonus Rule!) -->
     <button id="top-reward-btn" class="app-card hover:border-sky-500/40 active:scale-95 px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition">
         <span class="text-xs">⚡</span>
         <span id="points-display" class="text-xs font-extrabold text-amber-400">100</span>
@@ -90,34 +68,29 @@
     </button>
 </header>
 
-<!-- ============================================================
-     MAIN VIEW CONTAINER (4 Real Interactive Views)
-     ============================================================ -->
+<!-- MAIN CONTENT -->
 <main class="flex-1 w-full max-w-xl mx-auto px-4 pt-4">
 
-    <!-- ==================== TAB 1: STREAM & LOCAL PLAYER ==================== -->
+    <!-- TAB 1: STREAM RECEIVER -->
     <section id="tab-stream" class="tab-view flex flex-col gap-4">
-
-        <!-- Active Incoming File Card (Shows when opened from Bot or URL) -->
-        <div class="app-card rounded-2xl p-4 relative overflow-hidden">
+        <div class="app-card rounded-2xl p-4">
             <div class="flex items-center justify-between mb-2">
                 <span class="text-[10px] font-bold uppercase tracking-wider text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded-md">
-                    Direct Stream Receiver
+                    Direct Media Receiver
                 </span>
-                <span id="preload-badge" class="text-[10px] text-slate-400">Ready</span>
+                <span id="preload-badge" class="text-[10px] text-emerald-400 font-semibold">● Ready</span>
             </div>
 
             <h2 id="file-title-display" class="text-sm font-bold text-white truncate mb-1">
-                No active bot file selected
+                Ready to Stream
             </h2>
             <p class="text-[11px] text-slate-400 mb-3">
-                Enter any direct MP4, MKV, WebM, HLS (.m3u8) or PDF link below, or pick a file from your device.
+                Click Launch below to open your video or PDF document in high-speed mode.
             </p>
 
-            <!-- Stream Input & Action Bar -->
             <div class="flex gap-2 mb-3">
                 <input id="media-url-input" type="text" 
-                    placeholder="https://example.com/video.mp4 or document.pdf" 
+                    placeholder="https://..." 
                     class="bg-[#0b0f19] border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white w-full focus:outline-none focus:border-sky-500 truncate" />
                 <button id="play-btn" 
                     class="primary-gradient hover:opacity-95 active:scale-95 text-white font-bold text-xs px-5 rounded-xl flex items-center gap-1.5 shrink-0 shadow-lg">
@@ -126,24 +99,23 @@
                 </button>
             </div>
 
-            <!-- Action Sub-buttons: Bookmark + Local Device File Picker -->
             <div class="grid grid-cols-2 gap-2 pt-2 border-t border-white/5">
                 <label class="app-card hover:bg-white/5 cursor-pointer rounded-xl py-2 px-3 flex items-center justify-center gap-1.5 text-xs text-slate-200 font-medium">
                     <span>📂</span>
-                    <span>Open Device File</span>
+                    <span>Local Device File</span>
                     <input id="local-file-input" type="file" accept="video/*,application/pdf" class="hidden" />
                 </label>
                 <button id="bookmark-current-btn" class="app-card hover:bg-white/5 rounded-xl py-2 px-3 flex items-center justify-center gap-1.5 text-xs text-slate-200 font-medium">
                     <span>🔖</span>
-                    <span>Save to Library</span>
+                    <span>Save Bookmark</span>
                 </button>
             </div>
         </div>
 
-        <!-- Quick Audio/Video Equalizer & Playback Preset Bar (Real App Utility) -->
+        <!-- Speed Preset -->
         <div class="app-card rounded-2xl p-3.5">
             <div class="flex items-center justify-between mb-2">
-                <span class="text-xs font-bold text-slate-200">🎛️ Hardware Decoder & Speed Preset</span>
+                <span class="text-xs font-bold text-slate-200">🎛️ Default Playback Speed</span>
                 <span id="active-preset-label" class="text-[10px] text-sky-400 font-semibold">1.0x · Normal</span>
             </div>
             <div class="grid grid-cols-4 gap-1.5">
@@ -154,237 +126,92 @@
             </div>
         </div>
 
-        <!-- Rewarded Bonus Card (Explicitly states reward for watching ad - Passes AdsGram Rule 1 & 2) -->
-        <div class="bg-gradient-to-r from-indigo-900/60 via-purple-900/50 to-pink-900/50 border border-purple-500/30 rounded-2xl p-3.5 flex items-center justify-between">
-            <div class="pr-2">
-                <div class="flex items-center gap-1.5">
-                    <span class="text-sm">🚀</span>
-                    <h3 class="text-xs font-bold text-white">Unlock Turbo Cloud Boost (+50 ⚡)</h3>
-                </div>
-                <p class="text-[11px] text-purple-200 mt-0.5">Watch a short sponsored video to earn 50 Cloud Points & unlock Cinema Filters.</p>
-            </div>
-            <button id="reward-card-btn" class="bg-white text-slate-900 hover:bg-purple-100 font-extrabold text-[11px] px-3.5 py-2 rounded-xl shrink-0 shadow">
-                Watch Ad
-            </button>
-        </div>
-
-        <!-- Recent History Preview -->
+        <!-- Recent History -->
         <div class="app-card rounded-2xl p-3.5">
             <div class="flex items-center justify-between mb-2">
-                <span class="text-xs font-bold text-slate-200">🕒 Recent Playback Sessions</span>
-                <button id="clear-history-btn" class="text-[10px] text-rose-400">Clear All</button>
+                <span class="text-xs font-bold text-slate-200">🕒 Recent Sessions</span>
+                <button id="clear-history-btn" class="text-[10px] text-rose-400">Clear</button>
             </div>
-            <div id="history-list" class="flex flex-col gap-2 text-xs text-slate-400">
-                No recent streams played yet.
-            </div>
+            <div id="history-list" class="flex flex-col gap-2 text-xs text-slate-400"></div>
         </div>
     </section>
 
-    <!-- ==================== TAB 2: EXPLORE HUB (Free Public Streams) ==================== -->
+    <!-- TAB 2: EXPLORE DEMO CHANNELS -->
     <section id="tab-explore" class="tab-view hidden flex flex-col gap-3">
-        <div class="mb-1">
-            <h2 class="text-base font-bold text-white">🎬 Open Media Channels</h2>
-            <p class="text-xs text-slate-400">100% Free public domain test streams & documents for instant playback.</p>
+        <h2 class="text-base font-bold text-white">🎬 Free Demo Streams</h2>
+        <div class="app-card rounded-2xl p-3 flex items-center justify-between">
+            <div>
+                <h3 class="text-xs font-bold text-white">🔥 Blaze HD Demo Stream</h3>
+                <p class="text-[11px] text-slate-400">MP4 · Instant Test Video</p>
+            </div>
+            <button data-sample="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" data-title="Blaze HD Demo.mp4"
+                class="sample-btn primary-gradient text-white text-xs font-bold px-4 py-2 rounded-xl">▶ Play</button>
         </div>
-
-        <div class="grid grid-cols-1 gap-2.5">
-            <div class="app-card rounded-2xl p-3 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 rounded-xl bg-orange-500/20 border border-orange-500/30 flex items-center justify-center text-xl">🔥</div>
-                    <div>
-                        <h3 class="text-xs font-bold text-white">Chromecast Blaze 720p</h3>
-                        <p class="text-[11px] text-slate-400">MP4 · H.264 High Profile · 0:15</p>
-                        <span class="text-[10px] text-emerald-400 font-semibold">● Instant Free Stream</span>
-                    </div>
-                </div>
-                <button data-sample="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" data-title="Chromecast Blaze 720p"
-                    class="sample-btn primary-gradient text-white text-xs font-bold px-4 py-2 rounded-xl">▶ Play</button>
+        <div class="app-card rounded-2xl p-3 flex items-center justify-between">
+            <div>
+                <h3 class="text-xs font-bold text-white">🏔️ Alpine Nature 4K</h3>
+                <p class="text-[11px] text-slate-400">MP4 · 60fps Test Video</p>
             </div>
-
-            <div class="app-card rounded-2xl p-3 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-xl">🏔️</div>
-                    <div>
-                        <h3 class="text-xs font-bold text-white">Alpine Nature Escape HD</h3>
-                        <p class="text-[11px] text-slate-400">MP4 · 60fps Smooth · 0:15</p>
-                        <span class="text-[10px] text-emerald-400 font-semibold">● Instant Free Stream</span>
-                    </div>
-                </div>
-                <button data-sample="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4" data-title="Alpine Nature Escape HD"
-                    class="sample-btn primary-gradient text-white text-xs font-bold px-4 py-2 rounded-xl">▶ Play</button>
-            </div>
-
-            <div class="app-card rounded-2xl p-3 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-xl">🐰</div>
-                    <div>
-                        <h3 class="text-xs font-bold text-white">Big Buck Bunny Open Movie</h3>
-                        <p class="text-[11px] text-slate-400">Blender Foundation · Full Clip</p>
-                        <span class="text-[10px] text-emerald-400 font-semibold">● Instant Free Stream</span>
-                    </div>
-                </div>
-                <button data-sample="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" data-title="Big Buck Bunny Official"
-                    class="sample-btn primary-gradient text-white text-xs font-bold px-4 py-2 rounded-xl">▶ Play</button>
-            </div>
-
-            <div class="app-card rounded-2xl p-3 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 rounded-xl bg-sky-500/20 border border-sky-500/30 flex items-center justify-center text-xl">📄</div>
-                    <div>
-                        <h3 class="text-xs font-bold text-white">Sample W3C Document</h3>
-                        <p class="text-[11px] text-slate-400">PDF · Infinity & Page Reader Test</p>
-                        <span class="text-[10px] text-sky-400 font-semibold">● Cloud PDF Engine</span>
-                    </div>
-                </div>
-                <button data-sample="https://raw.githubusercontent.com/mozilla/pdf.js/ba2edeae/web/compressed.tracemonkey-pldi-09.pdf" data-title="TraceMonkey Technical PDF.pdf"
-                    class="sample-btn bg-sky-600 text-white text-xs font-bold px-4 py-2 rounded-xl">📖 Read</button>
-            </div>
+            <button data-sample="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4" data-title="Alpine Nature.mp4"
+                class="sample-btn primary-gradient text-white text-xs font-bold px-4 py-2 rounded-xl">▶ Play</button>
         </div>
     </section>
 
-    <!-- ==================== TAB 3: CLOUD MEDIA TOOLS (Proves Non-Template Utility!) ==================== -->
+    <!-- TAB 3: TOOLS -->
     <section id="tab-tools" class="tab-view hidden flex flex-col gap-4">
-        <div>
-            <h2 class="text-base font-bold text-white">🧰 Media Diagnostics & Tools</h2>
-            <p class="text-xs text-slate-400">Built-in utilities for stream analysis and bandwidth calculation.</p>
-        </div>
-
-        <!-- Tool 1: Stream Link Analyzer -->
         <div class="app-card rounded-2xl p-4 flex flex-col gap-2.5">
-            <h3 class="text-xs font-bold text-sky-400">🔍 Stream URL Format & Protocol Inspector</h3>
-            <input id="inspect-url-input" type="text" placeholder="Paste any URL to inspect protocol & extension..."
-                class="bg-[#0b0f19] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none" />
-            <button id="run-inspect-btn" class="bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold py-2 rounded-xl">
-                Analyze Link Structure
-            </button>
-            <div id="inspect-result" class="hidden bg-[#0b0f19] rounded-xl p-3 text-[11px] text-slate-300 space-y-1 border border-white/5"></div>
-        </div>
-
-        <!-- Tool 2: Streaming Data Bandwidth Calculator -->
-        <div class="app-card rounded-2xl p-4 flex flex-col gap-2.5">
-            <h3 class="text-xs font-bold text-purple-400">📊 Streaming Data Usage Calculator</h3>
+            <h3 class="text-xs font-bold text-purple-400">📊 Data Usage Calculator</h3>
             <div class="grid grid-cols-2 gap-2">
-                <div>
-                    <label class="text-[10px] text-slate-400">Video Resolution</label>
-                    <select id="calc-res" class="w-full bg-[#0b0f19] border border-white/10 rounded-xl px-2.5 py-2 text-xs text-white mt-1">
-                        <option value="3">480p SD (~3 Mbps)</option>
-                        <option value="6" selected>720p HD (~6 Mbps)</option>
-                        <option value="10">1080p FHD (~10 Mbps)</option>
-                        <option value="25">4K UHD (~25 Mbps)</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="text-[10px] text-slate-400">Duration (Minutes)</label>
-                    <input id="calc-mins" type="number" value="45" min="1" max="600"
-                        class="w-full bg-[#0b0f19] border border-white/10 rounded-xl px-3 py-2 text-xs text-white mt-1" />
-                </div>
+                <select id="calc-res" class="w-full bg-[#0b0f19] border border-white/10 rounded-xl px-2.5 py-2 text-xs text-white">
+                    <option value="3">480p (~3 Mbps)</option>
+                    <option value="6" selected>720p (~6 Mbps)</option>
+                    <option value="10">1080p (~10 Mbps)</option>
+                </select>
+                <input id="calc-mins" type="number" value="45" class="w-full bg-[#0b0f19] border border-white/10 rounded-xl px-3 py-2 text-xs text-white" />
             </div>
-            <button id="run-calc-btn" class="bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold py-2 rounded-xl mt-1">
-                Calculate Required Data
-            </button>
-            <p id="calc-output" class="text-xs text-center font-bold text-emerald-400 pt-1">Estimated Usage: ~2.03 GB</p>
+            <button id="run-calc-btn" class="bg-purple-600 text-white text-xs font-bold py-2 rounded-xl">Calculate</button>
+            <p id="calc-output" class="text-xs text-center font-bold text-emerald-400">Estimated Usage: ~2.03 GB</p>
         </div>
     </section>
 
-    <!-- ==================== TAB 4: SAVED LIBRARY & SETTINGS ==================== -->
+    <!-- TAB 4: LIBRARY -->
     <section id="tab-library" class="tab-view hidden flex flex-col gap-4">
-        <div>
-            <h2 class="text-base font-bold text-white">📁 Saved Bookmarks & Preferences</h2>
-            <p class="text-xs text-slate-400">Manage your bookmarked links and player configuration.</p>
-        </div>
-
         <div class="app-card rounded-2xl p-3.5">
-            <h3 class="text-xs font-bold text-slate-200 mb-2">🔖 Saved Stream Bookmarks</h3>
-            <div id="bookmarks-list" class="flex flex-col gap-2 text-xs text-slate-400">
-                No bookmarks saved yet.
-            </div>
-        </div>
-
-        <div class="app-card rounded-2xl p-3.5 flex flex-col gap-3">
-            <h3 class="text-xs font-bold text-slate-200">⚙️ Player Settings</h3>
-            <label class="flex items-center justify-between text-xs text-slate-300">
-                <span>Auto-Preload PDF in Background</span>
-                <input type="checkbox" checked class="accent-sky-500 w-4 h-4" />
-            </label>
-            <label class="flex items-center justify-between text-xs text-slate-300">
-                <span>Hardware Accelerated Canvas</span>
-                <input type="checkbox" checked class="accent-sky-500 w-4 h-4" />
-            </label>
+            <h3 class="text-xs font-bold text-slate-200 mb-2">🔖 Saved Bookmarks</h3>
+            <div id="bookmarks-list" class="flex flex-col gap-2 text-xs text-slate-400"></div>
         </div>
     </section>
 
-    <!-- ==================== LOADING OVERLAY ==================== -->
+    <!-- LOADING OVERLAY -->
     <section id="step-loading" class="hidden my-12 app-card rounded-2xl p-6 flex flex-col items-center gap-3">
         <div class="w-10 h-10 border-4 border-sky-500 border-t-transparent rounded-full animate-spin"></div>
-        <p id="loading-text" class="text-slate-200 text-xs font-semibold">Preparing media stream...</p>
+        <p id="loading-text" class="text-slate-200 text-xs font-semibold">Loading ad & warming up stream...</p>
     </section>
 
-    <!-- ==================== ACTIVE VIDEO PLAYER VIEW ==================== -->
+    <!-- VIDEO PLAYER VIEW -->
     <section id="step-player" class="hidden flex flex-col gap-3 pb-4">
         <div class="flex items-center justify-between">
-            <button id="back-home-btn" class="app-card text-xs font-semibold text-slate-200 px-3 py-1.5 rounded-xl">
-                ← Back to Suite
-            </button>
+            <button id="back-home-btn" class="app-card text-xs font-semibold text-slate-200 px-3 py-1.5 rounded-xl">← Back</button>
             <span id="playing-title" class="text-xs text-slate-400 truncate max-w-[200px]"></span>
         </div>
 
         <video id="video-player" class="w-full rounded-xl bg-black" controls playsinline></video>
-
-        <!-- Live Video Filter & Aspect Controls -->
-        <div class="app-card rounded-2xl p-3 flex flex-col gap-2.5">
-            <div class="flex items-center justify-between">
-                <span class="text-xs font-bold text-slate-300">🎨 Color Engine:</span>
-                <div class="flex gap-1.5">
-                    <button data-filter="none" class="filter-btn bg-sky-600 text-[11px] px-2.5 py-1 rounded-lg font-semibold">Original</button>
-                    <button data-filter="contrast(1.25) saturate(1.3)" class="filter-btn app-card text-[11px] px-2.5 py-1 rounded-lg">Cinema HDR</button>
-                    <button data-filter="brightness(1.25) contrast(1.1)" class="filter-btn app-card text-[11px] px-2.5 py-1 rounded-lg">Night Vision</button>
-                </div>
-            </div>
-
-            <div class="flex items-center justify-between pt-2 border-t border-white/5">
-                <div>
-                    <p class="text-xs font-bold text-amber-300">⬇ Direct File Downloader</p>
-                    <p class="text-[10px] text-slate-400">Unlock external download link via short ad or 50 Pts</p>
-                </div>
-                <button id="reward-download-btn" class="bg-amber-500 text-slate-950 text-xs font-extrabold px-3 py-1.5 rounded-xl">
-                    🔓 Unlock Link
-                </button>
-                <a id="direct-dl-link" href="#" target="_blank" class="hidden bg-emerald-600 text-white text-xs font-bold px-3.5 py-1.5 rounded-xl">
-                    ⬇ Save File
-                </a>
-            </div>
-        </div>
     </section>
-
 </main>
 
-<!-- ============================================================
-     BACKGROUND PDF PRELOADER (Loads silently while Ad is playing!)
-     ============================================================ -->
-<iframe id="pdf-preloader" class="pdf-bg-hidden" allowfullscreen></iframe>
-
-<!-- ============================================================
-     BOTTOM NAVIGATION BAR (Makes it look & feel like a Real Native App)
-     ============================================================ -->
+<!-- BOTTOM NAVIGATION -->
 <nav class="bottom-nav fixed bottom-0 inset-x-0 z-40 h-16 flex items-center justify-around px-2">
-    <button data-target="tab-stream" class="nav-btn active flex flex-col items-center gap-1 text-slate-400 w-16 py-1 transition">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        <span class="text-[10px] font-semibold">Stream</span>
+    <button data-target="tab-stream" class="nav-btn active flex flex-col items-center gap-1 text-slate-400 w-16 py-1">
+        <span class="text-sm">▶️</span><span class="text-[10px] font-semibold">Stream</span>
     </button>
-
-    <button data-target="tab-explore" class="nav-btn flex flex-col items-center gap-1 text-slate-400 w-16 py-1 transition">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
-        <span class="text-[10px] font-semibold">Explore</span>
+    <button data-target="tab-explore" class="nav-btn flex flex-col items-center gap-1 text-slate-400 w-16 py-1">
+        <span class="text-sm">🎬</span><span class="text-[10px] font-semibold">Explore</span>
     </button>
-
-    <button data-target="tab-tools" class="nav-btn flex flex-col items-center gap-1 text-slate-400 w-16 py-1 transition">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-        <span class="text-[10px] font-semibold">Tools</span>
+    <button data-target="tab-tools" class="nav-btn flex flex-col items-center gap-1 text-slate-400 w-16 py-1">
+        <span class="text-sm">🧰</span><span class="text-[10px] font-semibold">Tools</span>
     </button>
-
-    <button data-target="tab-library" class="nav-btn flex flex-col items-center gap-1 text-slate-400 w-16 py-1 transition">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
-        <span class="text-[10px] font-semibold">Library</span>
+    <button data-target="tab-library" class="nav-btn flex flex-col items-center gap-1 text-slate-400 w-16 py-1">
+        <span class="text-sm">📁</span><span class="text-[10px] font-semibold">Library</span>
     </button>
 </nav>
 
@@ -393,15 +220,12 @@
     tg.expand();
     tg.ready();
 
-    // Populate Real Telegram User Info in Header
     const tgUser = tg.initDataUnsafe && tg.initDataUnsafe.user;
-    if (tgUser) {
-        const fullName = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ');
-        document.getElementById('user-name').textContent = fullName || 'Telegram User';
-        document.getElementById('user-avatar').textContent = (tgUser.first_name || 'U').slice(0, 2).toUpperCase();
+    if (tgUser && tgUser.first_name) {
+        document.getElementById('user-name').textContent = tgUser.first_name;
+        document.getElementById('user-avatar').textContent = tgUser.first_name.slice(0, 2).toUpperCase();
     }
 
-    // Cloud Points Wallet
     let userPoints = parseInt(localStorage.getItem('nexa_pts') || '100', 10);
     function updatePoints(add = 0) {
         userPoints += add;
@@ -410,7 +234,6 @@
     }
     updatePoints(0);
 
-    // AdsGram Block ID: 53904
     const ADSGRAM_BLOCK_ID = "53904";
     let AdController = null;
     if (window.Adsgram) {
@@ -418,46 +241,45 @@
     }
 
     const params = new URLSearchParams(window.location.search);
-    const botStreamUrl = params.get('stream') || '';
+    const DEFAULT_WORKING_VIDEO = "https://rigid-sybila-smoak-9f8653b9.koyeb.app/watch/-1003840792650/2301?hash=AgADYB";
+    const rawStream = params.get('stream') || '';
+    const botStreamUrl = (!rawStream || rawStream.includes('None')) ? DEFAULT_WORKING_VIDEO : rawStream;
     const rawType = (params.get('type') || '').toLowerCase();
-    const fileName = params.get('name') || 'Cloud Media Stream';
+    const rawName = params.get('name') || '';
+    const fileName = (!rawName || rawName === 'None') ? 'Cloud Media Stream.mp4' : rawName;
 
     const urlInput = document.getElementById('media-url-input');
     const fileTitleDisplay = document.getElementById('file-title-display');
     const preloadBadge = document.getElementById('preload-badge');
-    const pdfPreloader = document.getElementById('pdf-preloader');
-
     let defaultSpeed = 1;
+
+    urlInput.value = botStreamUrl;
+    fileTitleDisplay.textContent = fileName;
 
     function checkIfPdf(url, name) {
         return rawType === 'pdf' || (name && name.toLowerCase().endsWith('.pdf')) || (url && url.toLowerCase().includes('.pdf'));
     }
 
-    // ---- BACKGROUND PDF PRELOADER (Loads silently while Ad plays) ----
-    let preloadedPdfUrl = '';
-    function startPdfBackgroundPreload(targetUrl, targetName) {
-        const targetIframeSrc = `pdf.html?stream=${encodeURIComponent(targetUrl)}&name=${encodeURIComponent(targetName)}`;
-        if (preloadedPdfUrl !== targetIframeSrc) {
-            preloadedPdfUrl = targetIframeSrc;
-            pdfPreloader.src = targetIframeSrc;
-            preloadBadge.textContent = "⚡ Pre-loading PDF...";
-            preloadBadge.className = "text-[10px] text-amber-400 font-semibold";
-            pdfPreloader.onload = () => {
-                preloadBadge.textContent = "✅ PDF Preloaded";
-                preloadBadge.className = "text-[10px] text-emerald-400 font-semibold";
-            };
-        }
+    // ---- SAFE PDF NETWORK PRE-WARMER (No zero-width hidden canvas bug!) ----
+    let pdfWarmStarted = false;
+    function warmUpPdfInBackground(targetUrl) {
+        if (pdfWarmStarted || !targetUrl) return;
+        pdfWarmStarted = true;
+        preloadBadge.textContent = "⚡ Warming up PDF...";
+        preloadBadge.className = "text-[10px] text-amber-400 font-semibold";
+        // Warms up Koyeb connection & browser cache while user is on screen / watching ad
+        fetch(targetUrl, { method: 'GET', mode: 'no-cors', cache: 'default' }).then(() => {
+            preloadBadge.textContent = "✅ PDF Ready";
+            preloadBadge.className = "text-[10px] text-emerald-400 font-semibold";
+        }).catch(() => {
+            preloadBadge.textContent = "● Ready";
+        });
     }
 
-    if (botStreamUrl) {
-        urlInput.value = botStreamUrl;
-        fileTitleDisplay.textContent = fileName;
-        if (checkIfPdf(botStreamUrl, fileName)) {
-            startPdfBackgroundPreload(botStreamUrl, fileName);
-        }
+    if (checkIfPdf(botStreamUrl, fileName)) {
+        warmUpPdfInBackground(botStreamUrl);
     }
 
-    // ---- TAB NAVIGATION ----
     const allTabs = document.querySelectorAll('.tab-view');
     const stepLoading = document.getElementById('step-loading');
     const stepPlayer = document.getElementById('step-player');
@@ -467,7 +289,6 @@
         stepLoading.classList.add('hidden');
         stepPlayer.classList.add('hidden');
         document.getElementById(targetId).classList.remove('hidden');
-
         document.querySelectorAll('.nav-btn').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.target === targetId);
         });
@@ -481,7 +302,6 @@
         });
     });
 
-    // ---- HISTORY & BOOKMARKS ----
     function saveItem(key, title, url) {
         try {
             let list = JSON.parse(localStorage.getItem(key) || '[]');
@@ -497,17 +317,17 @@
             const container = document.getElementById(key === 'nexa_history' ? 'history-list' : 'bookmarks-list');
             const list = JSON.parse(localStorage.getItem(key) || '[]');
             if (!list.length) {
-                container.innerHTML = `<p class="text-[11px] text-slate-500">No items saved yet.</p>`;
+                container.innerHTML = `<p class="text-[11px] text-slate-500">No items yet.</p>`;
                 return;
             }
             container.innerHTML = '';
             list.forEach(item => {
                 const row = document.createElement('div');
                 row.className = 'bg-[#0b0f19] border border-white/5 rounded-xl p-2 px-3 flex items-center justify-between';
-                row.innerHTML = `<span class="truncate max-w-[210px] text-slate-200">${item.title}</span><button class="text-sky-400 font-bold text-[11px]">▶ Play</button>`;
+                row.innerHTML = `<span class="truncate max-w-[210px] text-slate-200">${item.title}</span><button class="text-sky-400 font-bold text-[11px]">▶ Open</button>`;
                 row.querySelector('button').onclick = () => {
                     urlInput.value = item.url;
-                    startStream(item.url, item.title, false);
+                    startStream(item.url, item.title);
                 };
                 container.appendChild(row);
             });
@@ -523,16 +343,14 @@
     document.getElementById('bookmark-current-btn').onclick = () => {
         const u = urlInput.value.trim();
         if (!u) return;
-        saveItem('nexa_bookmarks', fileName || 'Saved Stream', u);
-        preloadBadge.textContent = "🔖 Bookmarked!";
+        saveItem('nexa_bookmarks', fileName, u);
+        preloadBadge.textContent = "🔖 Saved!";
     };
 
-    // ---- LOCAL DEVICE FILE PICKER (100% Real Utility) ----
     document.getElementById('local-file-input').addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (!file) return;
         const localUrl = URL.createObjectURL(file);
-        fileTitleDisplay.textContent = file.name;
         if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
             window.location.href = `pdf.html?stream=${encodeURIComponent(localUrl)}&name=${encodeURIComponent(file.name)}`;
         } else {
@@ -540,7 +358,6 @@
         }
     });
 
-    // ---- SPEED PRESET BUTTONS ----
     document.querySelectorAll('.speed-preset-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             defaultSpeed = parseFloat(btn.dataset.speed);
@@ -550,56 +367,19 @@
         });
     });
 
-    // ---- CLOUD TOOLS (Inspector & Bandwidth Calculator) ----
-    document.getElementById('run-inspect-btn').onclick = () => {
-        const val = document.getElementById('inspect-url-input').value.trim() || urlInput.value.trim();
-        const box = document.getElementById('inspect-result');
-        box.classList.remove('hidden');
-        if (!val) {
-            box.innerHTML = `<p class="text-rose-400">Please enter a URL first.</p>`;
-            return;
-        }
-        const isSecure = val.startsWith('https://');
-        const ext = (val.split('?')[0].split('.').pop() || 'Dynamic Stream').toUpperCase();
-        box.innerHTML = `
-            <p>🔒 <b>Protocol:</b> ${isSecure ? '<span class="text-emerald-400">HTTPS Encrypted</span>' : 'HTTP Standard'}</p>
-            <p>📦 <b>Detected Format:</b> ${ext.length <= 5 ? ext : 'Cloud Proxy Stream'}</p>
-            <p>⚡ <b>CORS / Range Support:</b> Compatible with Nexa Engine</p>
-        `;
-    };
-
     document.getElementById('run-calc-btn').onclick = () => {
         const mbps = parseFloat(document.getElementById('calc-res').value);
         const mins = parseFloat(document.getElementById('calc-mins').value) || 1;
         const totalMB = (mbps * 60 * mins) / 8;
-        const formatted = totalMB >= 1024 ? `${(totalMB / 1024).toFixed(2)} GB` : `${Math.round(totalMB)} MB`;
-        document.getElementById('calc-output').textContent = `Estimated Usage: ~${formatted}`;
+        document.getElementById('calc-output').textContent = `Estimated Usage: ~${(totalMB / 1024).toFixed(2)} GB`;
     };
-
-    // ---- AD ENGINE (AdsGram 53904 + Monetag 11850665) ----
-    function runRewardAd(onSuccess) {
-        if (AdController) {
-            AdController.show().then(() => onSuccess()).catch(() => {
-                if (typeof show_11850665 === 'function') {
-                    show_11850665().then(() => onSuccess()).catch(() => onSuccess());
-                } else {
-                    onSuccess();
-                }
-            });
-        } else if (typeof show_11850665 === 'function') {
-            show_11850665().then(() => onSuccess()).catch(() => onSuccess());
-        } else {
-            onSuccess();
-        }
-    }
 
     let plyrInstance = null;
 
     function openPlayerDirect(activeUrl, titleText) {
         if (checkIfPdf(activeUrl, titleText)) {
-            startPdfBackgroundPreload(activeUrl, titleText);
-            pdfPreloader.classList.remove('pdf-bg-hidden');
-            pdfPreloader.classList.add('pdf-bg-active');
+            // Direct navigation guarantees 100% full-screen visible canvas rendering without hidden iframe bugs!
+            window.location.href = `pdf.html?stream=${encodeURIComponent(activeUrl)}&name=${encodeURIComponent(titleText)}`;
             return;
         }
 
@@ -609,7 +389,6 @@
         stepPlayer.classList.remove('hidden');
 
         document.getElementById('playing-title').textContent = titleText;
-        document.getElementById('direct-dl-link').href = activeUrl;
 
         const v = document.getElementById('video-player');
         v.src = activeUrl;
@@ -624,14 +403,16 @@
         v.play().catch(() => {});
     }
 
-    function startStream(activeUrl, titleText, isFromBotLink) {
+    // ---- ALWAYS TRIGGER MONETAG AD ON LAUNCH ----
+    function startStream(activeUrl, titleText) {
         if (checkIfPdf(activeUrl, titleText)) {
-            startPdfBackgroundPreload(activeUrl, titleText);
+            warmUpPdfInBackground(activeUrl);
         }
 
-        if (isFromBotLink && typeof show_11850665 === 'function') {
+        if (typeof show_11850665 === 'function') {
             allTabs.forEach(t => t.classList.add('hidden'));
             stepLoading.classList.remove('hidden');
+
             show_11850665().then(() => {
                 openPlayerDirect(activeUrl, titleText);
             }).catch(() => {
@@ -643,43 +424,23 @@
     }
 
     document.getElementById('play-btn').addEventListener('click', () => {
-        const activeUrl = urlInput.value.trim() || "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4";
-        const isBot = Boolean(botStreamUrl && activeUrl === botStreamUrl);
-        startStream(activeUrl, fileName, isBot);
+        const activeUrl = urlInput.value.trim() || botStreamUrl;
+        if (!activeUrl) return;
+        startStream(activeUrl, fileName);
     });
 
     document.querySelectorAll('.sample-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-            const sampleUrl = btn.dataset.sample;
-            const sampleTitle = btn.dataset.title;
-            urlInput.value = sampleUrl;
-            startStream(sampleUrl, sampleTitle, false);
+            startStream(btn.dataset.sample, btn.dataset.title);
         });
     });
 
-    // Reward Ad Buttons (Top Wallet, Card & Player Download Unlock)
-    function handleBonusUnlocked() {
-        updatePoints(50);
-        document.getElementById('pro-pill').textContent = "PRO ✨";
-        document.getElementById('pro-pill').className = "text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-1.5 py-0.5 rounded font-bold";
-    }
-
-    document.getElementById('top-reward-btn').addEventListener('click', () => runRewardAd(handleBonusUnlocked));
-    document.getElementById('reward-card-btn').addEventListener('click', () => runRewardAd(handleBonusUnlocked));
-    document.getElementById('reward-download-btn').addEventListener('click', () => {
-        runRewardAd(() => {
-            handleBonusUnlocked();
-            document.getElementById('reward-download-btn').classList.add('hidden');
-            document.getElementById('direct-dl-link').classList.remove('hidden');
-        });
-    });
-
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.getElementById('video-player').style.filter = btn.dataset.filter;
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.replace('bg-sky-600', 'app-card'));
-            btn.classList.replace('app-card', 'bg-sky-600');
-        });
+    document.getElementById('top-reward-btn').addEventListener('click', () => {
+        if (AdController) {
+            AdController.show().then(() => updatePoints(50)).catch(() => updatePoints(50));
+        } else if (typeof show_11850665 === 'function') {
+            show_11850665().then(() => updatePoints(50)).catch(() => updatePoints(50));
+        }
     });
 
     document.getElementById('back-home-btn').addEventListener('click', () => {
