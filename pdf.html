@@ -39,13 +39,12 @@
         overflow-y: auto;
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
-        scroll-behavior: smooth;
     }
     .pdf-page-canvas {
         display: block;
         margin: 0 auto 12px auto;
         border-radius: 8px;
-        background: #1f1614;
+        background: #fff;
         box-shadow: 0 4px 20px rgba(0,0,0,0.5);
         max-width: 100%;
         height: auto;
@@ -54,7 +53,7 @@
 </head>
 <body class="flex flex-col items-center min-h-screen px-3 py-4 select-none">
 
-<!-- HEADER (Can be hidden in Full mode) -->
+<!-- HEADER -->
 <div id="top-header" class="flex flex-col items-center mb-3">
     <div class="w-14 h-14 bg-gradient-to-tr from-orange-500 to-red-500 rounded-2xl flex items-center justify-center shadow-[0_0_20px_rgba(249,115,22,0.5)] mb-2">
         <svg class="w-7 h-7 text-white translate-x-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
@@ -68,45 +67,40 @@
 
     <!-- TOP TOOLBAR -->
     <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 mb-2 border-b border-white/10 z-20">
-        <!-- Zoom Controls -->
         <div class="ctrl-btn flex items-center gap-2.5">
             <button id="zoom-out" class="text-sm font-bold px-1">−</button>
             <span id="zoom-label" class="text-xs min-w-[38px] text-center">100%</span>
             <button id="zoom-in" class="text-sm font-bold px-1">+</button>
         </div>
 
-        <!-- Mode & Quality Controls -->
         <div class="flex items-center gap-1.5">
             <button id="mode-toggle-btn" class="ctrl-btn">Scroll</button>
             <select id="quality-select" class="ctrl-btn bg-[#1a110e] focus:outline-none">
                 <option value="1.2">Fast</option>
-                <option value="1.75" selected>HD</option>
-                <option value="2.4">Ultra</option>
+                <option value="1.6" selected>HD</option>
+                <option value="2.2">Ultra</option>
             </select>
             <button id="infinity-btn" class="ctrl-btn active">∞ Infinity</button>
         </div>
     </div>
 
-    <!-- PAGE NAVIGATION BAR (Shown in Page-by-Page Mode) -->
+    <!-- PAGE NAVIGATION BAR -->
     <div id="page-nav-bar" class="hidden flex items-center justify-center gap-3 py-1.5 mb-2 bg-black/30 rounded-xl text-xs">
         <button id="prev-page" class="ctrl-btn py-1 px-3">◀ Prev</button>
         <span id="page-counter" class="font-bold text-orange-400">Page 1 / 1</span>
         <button id="next-page" class="ctrl-btn py-1 px-3">Next ▶</button>
     </div>
 
-    <!-- LOADING OVERLAY (Prevents Blank Black Screen!) -->
+    <!-- LOADING SPINNER -->
     <div id="pdf-loader" class="my-auto flex flex-col items-center justify-center gap-3 py-16">
         <div class="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
-        <p id="loader-status" class="text-xs text-gray-300 font-semibold">Fetching PDF from server...</p>
-        <div class="w-48 h-1.5 bg-white/10 rounded-full overflow-hidden">
-            <div id="loader-bar" class="h-full bg-orange-500 transition-all duration-200" style="width: 15%"></div>
-        </div>
+        <p id="loader-status" class="text-xs text-gray-300 font-semibold">Loading PDF pages...</p>
     </div>
 
     <!-- ERROR / FALLBACK OVERLAY -->
     <div id="pdf-error" class="hidden my-auto flex flex-col items-center justify-center gap-3 py-12 px-4 text-center">
-        <p id="pdf-error-msg" class="text-xs text-red-400 font-semibold">PDF load hone mein time lag raha hai.</p>
-        <div class="flex gap-2">
+        <p id="pdf-error-msg" class="text-xs text-red-400 font-semibold">Unable to load PDF stream.</p>
+        <div class="flex gap-2 mt-1">
             <button id="retry-pdf-btn" class="bg-orange-500 text-white text-xs font-bold px-4 py-2 rounded-xl">
                 🔄 Retry Load
             </button>
@@ -144,22 +138,21 @@
     const pdfContainer = document.getElementById('pdf-container');
     const pdfLoader = document.getElementById('pdf-loader');
     const loaderStatus = document.getElementById('loader-status');
-    const loaderBar = document.getElementById('loader-bar');
     const pdfError = document.getElementById('pdf-error');
+    const pdfErrorMsg = document.getElementById('pdf-error-msg');
     const pageNavBar = document.getElementById('page-nav-bar');
     const pageCounter = document.getElementById('page-counter');
 
     let pdfDoc = null;
     let currentScale = 1.0;
-    let qualityMultiplier = 1.75;
+    let qualityMultiplier = 1.6;
     let isInfinityMode = true;
     let currentPage = 1;
-    let observer = null;
 
-    // ---- ROBUST PDF LOADER WITH AUTO-FALLBACK FOR KOYEB ----
-    async function loadPdfDocument(disableRangeFallback = false) {
+    async function loadPdfDocument() {
         if (!streamUrl) {
             pdfLoader.classList.add('hidden');
+            pdfErrorMsg.textContent = "No PDF URL provided.";
             pdfError.classList.remove('hidden');
             return;
         }
@@ -167,107 +160,70 @@
         pdfError.classList.add('hidden');
         pdfLoader.classList.remove('hidden');
         pdfContainer.innerHTML = '';
-        loaderStatus.textContent = disableRangeFallback ? "Retrying in compatibility mode..." : "Loading PDF pages...";
-        loaderBar.style.width = "20%";
+        loaderStatus.textContent = "Loading PDF...";
 
         try {
-            const loadingTask = pdfjsLib.getDocument({
-                url: streamUrl,
-                disableRange: disableRangeFallback,
-                disableStream: disableRangeFallback,
-                disableAutoFetch: false,
-                cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
-                cMapPacked: true,
-            });
-
-            loadingTask.onProgress = (progressData) => {
-                if (progressData.total > 0) {
-                    const pct = Math.min(95, Math.round((progressData.loaded / progressData.total) * 100));
-                    loaderBar.style.width = `${pct}%`;
-                    loaderStatus.textContent = `Downloading PDF... ${pct}%`;
+            const loadingTask = pdfjsLib.getDocument(streamUrl);
+            loadingTask.onProgress = (p) => {
+                if (p.total > 0) {
+                    const pct = Math.min(99, Math.round((p.loaded / p.total) * 100));
+                    loaderStatus.textContent = `Loading PDF... ${pct}%`;
                 }
             };
 
             pdfDoc = await loadingTask.promise;
-            loaderBar.style.width = "100%";
             pdfLoader.classList.add('hidden');
-
             await renderCurrentMode();
         } catch (err) {
-            console.warn("PDF load attempt failed:", err);
-            // If first attempt with range requests failed/glitched on Koyeb, automatically retry once with disableRange: true!
-            if (!disableRangeFallback) {
-                return loadPdfDocument(true);
-            }
+            console.error("PDF.js Error:", err);
             pdfLoader.classList.add('hidden');
+            pdfErrorMsg.textContent = `Error: ${err.message || 'Server did not return a valid PDF.'}`;
             pdfError.classList.remove('hidden');
         }
     }
 
-    async function renderSinglePageToCanvas(pageNumber, canvas) {
-        if (!pdfDoc || canvas.dataset.rendered === 'true') return;
-        canvas.dataset.rendered = 'true';
+    async function renderSinglePage(pageNumber, canvas) {
+        const page = await pdfDoc.getPage(pageNumber);
+        const containerWidth = Math.max(300, pdfContainer.clientWidth - 12);
+        const unscaled = page.getViewport({ scale: 1 });
+        const scale = (containerWidth / unscaled.width) * currentScale;
+        const viewport = page.getViewport({ scale: scale * qualityMultiplier });
 
-        try {
-            const page = await pdfDoc.getPage(pageNumber);
-            const containerWidth = Math.max(300, pdfContainer.clientWidth - 16);
-            const unscaledViewport = page.getViewport({ scale: 1 });
-            const baseScale = (containerWidth / unscaledViewport.width) * currentScale;
-            const renderViewport = page.getViewport({ scale: baseScale * qualityMultiplier });
+        const ctx = canvas.getContext('2d');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        canvas.style.width = `${Math.round(unscaled.width * scale)}px`;
+        canvas.style.height = `${Math.round(unscaled.height * scale)}px`;
 
-            const ctx = canvas.getContext('2d');
-            canvas.width = renderViewport.width;
-            canvas.height = renderViewport.height;
-            canvas.style.width = `${Math.round(unscaledViewport.width * baseScale)}px`;
-            canvas.style.height = `${Math.round(unscaledViewport.height * baseScale)}px`;
-
-            await page.render({ canvasContext: ctx, viewport: renderViewport }).promise;
-        } catch (e) {
-            canvas.dataset.rendered = 'false';
-        }
+        await page.render({ canvasContext: ctx, viewport }).promise;
     }
+
+    let renderGeneration = 0;
 
     async function renderCurrentMode() {
         if (!pdfDoc) return;
-        if (observer) observer.disconnect();
+        const myGen = ++renderGeneration;
         pdfContainer.innerHTML = '';
 
         if (isInfinityMode) {
             pageNavBar.classList.add('hidden');
-
-            // Create placeholders and lazy-render pages as user scrolls (Prevents GPU crash on large PDFs!)
-            observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const pageNum = parseInt(entry.target.dataset.page, 10);
-                        renderSinglePageToCanvas(pageNum, entry.target);
-                    }
-                });
-            }, { root: pdfContainer, rootMargin: '600px 0px' });
-
             for (let i = 1; i <= pdfDoc.numPages; i++) {
+                if (myGen !== renderGeneration) return;
                 const canvas = document.createElement('canvas');
                 canvas.className = 'pdf-page-canvas';
-                canvas.dataset.page = i;
-                canvas.style.minHeight = '380px';
                 pdfContainer.appendChild(canvas);
-                observer.observe(canvas);
+                await renderSinglePage(i, canvas);
             }
-            // Immediately render first 2 pages so screen is NEVER blank!
-            const firstTwo = pdfContainer.querySelectorAll('canvas');
-            if (firstTwo[0]) await renderSinglePageToCanvas(1, firstTwo[0]);
-            if (firstTwo[1]) await renderSinglePageToCanvas(2, firstTwo[1]);
         } else {
             pageNavBar.classList.remove('hidden');
             pageCounter.textContent = `Page ${currentPage} / ${pdfDoc.numPages}`;
             const canvas = document.createElement('canvas');
             canvas.className = 'pdf-page-canvas';
             pdfContainer.appendChild(canvas);
-            await renderSinglePageToCanvas(currentPage, canvas);
+            await renderSinglePage(currentPage, canvas);
         }
     }
 
-    // ---- TOOLBAR CONTROLS ----
     document.getElementById('zoom-in').onclick = () => {
         currentScale = Math.min(2.5, +(currentScale + 0.25).toFixed(2));
         document.getElementById('zoom-label').textContent = `${Math.round(currentScale * 100)}%`;
@@ -278,7 +234,6 @@
         document.getElementById('zoom-label').textContent = `${Math.round(currentScale * 100)}%`;
         renderCurrentMode();
     };
-
     document.getElementById('quality-select').onchange = (e) => {
         qualityMultiplier = parseFloat(e.target.value);
         renderCurrentMode();
@@ -299,19 +254,13 @@
     modeToggleBtn.onclick = () => setReadingMode(!isInfinityMode);
 
     document.getElementById('prev-page').onclick = () => {
-        if (currentPage > 1) {
-            currentPage--;
-            renderCurrentMode();
-        }
+        if (currentPage > 1) { currentPage--; renderCurrentMode(); }
     };
     document.getElementById('next-page').onclick = () => {
-        if (pdfDoc && currentPage < pdfDoc.numPages) {
-            currentPage++;
-            renderCurrentMode();
-        }
+        if (pdfDoc && currentPage < pdfDoc.numPages) { currentPage++; renderCurrentMode(); }
     };
 
-    document.getElementById('retry-pdf-btn').onclick = () => loadPdfDocument(true);
+    document.getElementById('retry-pdf-btn').onclick = () => loadPdfDocument();
 
     let isFull = false;
     document.getElementById('fullscreen-btn').onclick = () => {
@@ -320,9 +269,7 @@
         document.getElementById('fullscreen-btn').textContent = isFull ? '✕ Exit' : '⛶ Full';
     };
 
-    // Start loading immediately
-    loadPdfDocument(false);
+    loadPdfDocument();
 </script>
 </body>
-        </html>
-        
+</html>
