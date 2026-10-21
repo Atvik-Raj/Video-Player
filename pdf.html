@@ -3,10 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-<title>Nexa PDF Reader</title>
+<title>Nexa PDF Viewer</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
 <style>
     html, body {
@@ -15,6 +14,7 @@
         margin: 0;
         padding: 0;
         height: 100%;
+        overflow: hidden;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
     .glass-panel {
@@ -25,251 +25,61 @@
         background: rgba(255, 255, 255, 0.06);
         border: 1px solid rgba(255, 255, 255, 0.14);
         border-radius: 10px;
-        padding: 5px 10px;
+        padding: 6px 14px;
         font-size: 12px;
         font-weight: 600;
         color: #f3f4f6;
-    }
-    .ctrl-btn.active {
-        border-color: #f97316;
-        color: #fb923c;
-        background: rgba(249, 115, 22, 0.12);
-    }
-    #pdf-container {
-        overflow-y: auto;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-    .pdf-page-canvas {
-        display: block;
-        margin: 0 auto 12px auto;
-        border-radius: 8px;
-        background: #fff;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-        max-width: 100%;
-        height: auto;
+        text-decoration: none;
     }
 </style>
 </head>
-<body class="flex flex-col items-center min-h-screen px-3 py-4 select-none">
+<body class="flex flex-col items-center h-screen px-3 py-3 select-none">
 
 <!-- HEADER -->
-<div id="top-header" class="flex flex-col items-center mb-3">
-    <div class="w-14 h-14 bg-gradient-to-tr from-orange-500 to-red-500 rounded-2xl flex items-center justify-center shadow-[0_0_20px_rgba(249,115,22,0.5)] mb-2">
-        <svg class="w-7 h-7 text-white translate-x-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+<div id="top-header" class="flex items-center justify-between w-full max-w-3xl mb-2 px-1">
+    <div class="flex items-center gap-2">
+        <div class="w-9 h-9 bg-gradient-to-tr from-orange-500 to-red-500 rounded-xl flex items-center justify-center shadow">
+            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        </div>
+        <div>
+            <h1 class="text-xs font-bold tracking-wide">Nexa PDF Reader</h1>
+            <p id="pdf-title" class="text-gray-400 text-[10px] truncate max-w-[200px]">Document Viewer</p>
+        </div>
     </div>
-    <h1 class="text-lg font-bold tracking-wide">Nexa Player</h1>
-    <p id="pdf-title" class="text-gray-400 text-xs mt-0.5 truncate max-w-xs">Loading document...</p>
+    <div class="flex items-center gap-2">
+        <a id="download-btn" href="#" target="_blank" class="ctrl-btn bg-orange-500/20 border-orange-500/40 text-orange-300">⬇ Download</a>
+        <button id="back-btn" class="ctrl-btn">← Back</button>
+    </div>
 </div>
 
-<!-- MAIN READER BOX -->
-<div id="reader-box" class="w-full max-w-3xl flex-1 glass-panel rounded-2xl p-2.5 flex flex-col relative overflow-hidden" style="min-height: 75vh;">
-
-    <!-- TOP TOOLBAR -->
-    <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 mb-2 border-b border-white/10 z-20">
-        <div class="ctrl-btn flex items-center gap-2.5">
-            <button id="zoom-out" class="text-sm font-bold px-1">−</button>
-            <span id="zoom-label" class="text-xs min-w-[38px] text-center">100%</span>
-            <button id="zoom-in" class="text-sm font-bold px-1">+</button>
-        </div>
-
-        <div class="flex items-center gap-1.5">
-            <button id="mode-toggle-btn" class="ctrl-btn">Scroll</button>
-            <select id="quality-select" class="ctrl-btn bg-[#1a110e] focus:outline-none">
-                <option value="1.2">Fast</option>
-                <option value="1.6" selected>HD</option>
-                <option value="2.2">Ultra</option>
-            </select>
-            <button id="infinity-btn" class="ctrl-btn active">∞ Infinity</button>
-        </div>
-    </div>
-
-    <!-- PAGE NAVIGATION BAR -->
-    <div id="page-nav-bar" class="hidden flex items-center justify-center gap-3 py-1.5 mb-2 bg-black/30 rounded-xl text-xs">
-        <button id="prev-page" class="ctrl-btn py-1 px-3">◀ Prev</button>
-        <span id="page-counter" class="font-bold text-orange-400">Page 1 / 1</span>
-        <button id="next-page" class="ctrl-btn py-1 px-3">Next ▶</button>
-    </div>
-
-    <!-- LOADING SPINNER -->
-    <div id="pdf-loader" class="my-auto flex flex-col items-center justify-center gap-3 py-16">
-        <div class="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
-        <p id="loader-status" class="text-xs text-gray-300 font-semibold">Loading PDF pages...</p>
-    </div>
-
-    <!-- ERROR / FALLBACK OVERLAY -->
-    <div id="pdf-error" class="hidden my-auto flex flex-col items-center justify-center gap-3 py-12 px-4 text-center">
-        <p id="pdf-error-msg" class="text-xs text-red-400 font-semibold">Unable to load PDF stream.</p>
-        <div class="flex gap-2 mt-1">
-            <button id="retry-pdf-btn" class="bg-orange-500 text-white text-xs font-bold px-4 py-2 rounded-xl">
-                🔄 Retry Load
-            </button>
-            <a id="external-pdf-btn" href="#" target="_blank" class="ctrl-btn text-xs py-2 px-4">
-                🌐 Open Direct
-            </a>
-        </div>
-    </div>
-
-    <!-- PDF PAGES CONTAINER -->
-    <div id="pdf-container" class="flex-1 w-full"></div>
-
-    <!-- FLOATING FULLSCREEN BUTTON -->
-    <button id="fullscreen-btn" class="ctrl-btn fixed bottom-5 right-5 z-30 shadow-lg bg-[#1a110e]/90 backdrop-blur">
-        ⛶ Full
-    </button>
+<!-- PROXY VIEWER (100% CORS Bypass via Google Docs Viewer) -->
+<div class="w-full max-w-3xl flex-1 glass-panel rounded-2xl overflow-hidden flex flex-col relative mb-2">
+    <iframe id="pdf-frame" class="w-full h-full border-0 bg-white" allowfullscreen></iframe>
 </div>
-
-<p class="text-gray-600 text-[10px] mt-3">POWERED BY NEXA ENGINE · SECURE</p>
 
 <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
     tg.ready();
 
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
     const params = new URLSearchParams(window.location.search);
     const streamUrl = params.get('stream') || '';
     const fileName = params.get('name') || 'Document.pdf';
 
     document.getElementById('pdf-title').textContent = fileName;
-    document.getElementById('external-pdf-btn').href = streamUrl;
+    document.getElementById('download-btn').href = streamUrl;
 
-    const pdfContainer = document.getElementById('pdf-container');
-    const pdfLoader = document.getElementById('pdf-loader');
-    const loaderStatus = document.getElementById('loader-status');
-    const pdfError = document.getElementById('pdf-error');
-    const pdfErrorMsg = document.getElementById('pdf-error-msg');
-    const pageNavBar = document.getElementById('page-nav-bar');
-    const pageCounter = document.getElementById('page-counter');
-
-    let pdfDoc = null;
-    let currentScale = 1.0;
-    let qualityMultiplier = 1.6;
-    let isInfinityMode = true;
-    let currentPage = 1;
-
-    async function loadPdfDocument() {
-        if (!streamUrl) {
-            pdfLoader.classList.add('hidden');
-            pdfErrorMsg.textContent = "No PDF URL provided.";
-            pdfError.classList.remove('hidden');
-            return;
-        }
-
-        pdfError.classList.add('hidden');
-        pdfLoader.classList.remove('hidden');
-        pdfContainer.innerHTML = '';
-        loaderStatus.textContent = "Loading PDF...";
-
-        try {
-            const loadingTask = pdfjsLib.getDocument(streamUrl);
-            loadingTask.onProgress = (p) => {
-                if (p.total > 0) {
-                    const pct = Math.min(99, Math.round((p.loaded / p.total) * 100));
-                    loaderStatus.textContent = `Loading PDF... ${pct}%`;
-                }
-            };
-
-            pdfDoc = await loadingTask.promise;
-            pdfLoader.classList.add('hidden');
-            await renderCurrentMode();
-        } catch (err) {
-            console.error("PDF.js Error:", err);
-            pdfLoader.classList.add('hidden');
-            pdfErrorMsg.textContent = `Error: ${err.message || 'Server did not return a valid PDF.'}`;
-            pdfError.classList.remove('hidden');
-        }
+    const iframe = document.getElementById('pdf-frame');
+    if (streamUrl) {
+        // Google Docs Viewer proxying prevents any CORS or Fetch failures completely!
+        iframe.src = `https://docs.google.com/gview?url=${encodeURIComponent(streamUrl)}&embedded=true`;
+    } else {
+        iframe.srcdoc = "<h3 style='color:red; text-align:center; padding-top:20vh;'>Error: No PDF stream URL provided.</h3>";
     }
 
-    async function renderSinglePage(pageNumber, canvas) {
-        const page = await pdfDoc.getPage(pageNumber);
-        const containerWidth = Math.max(300, pdfContainer.clientWidth - 12);
-        const unscaled = page.getViewport({ scale: 1 });
-        const scale = (containerWidth / unscaled.width) * currentScale;
-        const viewport = page.getViewport({ scale: scale * qualityMultiplier });
-
-        const ctx = canvas.getContext('2d');
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-        canvas.style.width = `${Math.round(unscaled.width * scale)}px`;
-        canvas.style.height = `${Math.round(unscaled.height * scale)}px`;
-
-        await page.render({ canvasContext: ctx, viewport }).promise;
-    }
-
-    let renderGeneration = 0;
-
-    async function renderCurrentMode() {
-        if (!pdfDoc) return;
-        const myGen = ++renderGeneration;
-        pdfContainer.innerHTML = '';
-
-        if (isInfinityMode) {
-            pageNavBar.classList.add('hidden');
-            for (let i = 1; i <= pdfDoc.numPages; i++) {
-                if (myGen !== renderGeneration) return;
-                const canvas = document.createElement('canvas');
-                canvas.className = 'pdf-page-canvas';
-                pdfContainer.appendChild(canvas);
-                await renderSinglePage(i, canvas);
-            }
-        } else {
-            pageNavBar.classList.remove('hidden');
-            pageCounter.textContent = `Page ${currentPage} / ${pdfDoc.numPages}`;
-            const canvas = document.createElement('canvas');
-            canvas.className = 'pdf-page-canvas';
-            pdfContainer.appendChild(canvas);
-            await renderSinglePage(currentPage, canvas);
-        }
-    }
-
-    document.getElementById('zoom-in').onclick = () => {
-        currentScale = Math.min(2.5, +(currentScale + 0.25).toFixed(2));
-        document.getElementById('zoom-label').textContent = `${Math.round(currentScale * 100)}%`;
-        renderCurrentMode();
+    document.getElementById('back-btn').onclick = () => {
+        window.location.href = "index.html";
     };
-    document.getElementById('zoom-out').onclick = () => {
-        currentScale = Math.max(0.5, +(currentScale - 0.25).toFixed(2));
-        document.getElementById('zoom-label').textContent = `${Math.round(currentScale * 100)}%`;
-        renderCurrentMode();
-    };
-    document.getElementById('quality-select').onchange = (e) => {
-        qualityMultiplier = parseFloat(e.target.value);
-        renderCurrentMode();
-    };
-
-    const modeToggleBtn = document.getElementById('mode-toggle-btn');
-    const infinityBtn = document.getElementById('infinity-btn');
-
-    function setReadingMode(infinity) {
-        isInfinityMode = infinity;
-        infinityBtn.classList.toggle('active', infinity);
-        modeToggleBtn.textContent = infinity ? 'Scroll' : 'Page';
-        modeToggleBtn.classList.toggle('active', !infinity);
-        renderCurrentMode();
-    }
-
-    infinityBtn.onclick = () => setReadingMode(true);
-    modeToggleBtn.onclick = () => setReadingMode(!isInfinityMode);
-
-    document.getElementById('prev-page').onclick = () => {
-        if (currentPage > 1) { currentPage--; renderCurrentMode(); }
-    };
-    document.getElementById('next-page').onclick = () => {
-        if (pdfDoc && currentPage < pdfDoc.numPages) { currentPage++; renderCurrentMode(); }
-    };
-
-    document.getElementById('retry-pdf-btn').onclick = () => loadPdfDocument();
-
-    let isFull = false;
-    document.getElementById('fullscreen-btn').onclick = () => {
-        isFull = !isFull;
-        document.getElementById('top-header').classList.toggle('hidden', isFull);
-        document.getElementById('fullscreen-btn').textContent = isFull ? '✕ Exit' : '⛶ Full';
-    };
-
-    loadPdfDocument();
 </script>
 </body>
 </html>
